@@ -5,6 +5,8 @@
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FRONTEND_DIR="$ROOT_DIR/document"
 BACKEND_DIR="$ROOT_DIR/server"
+FRONTEND_PORT=1420
+BACKEND_PORT=3000
 
 cleanup() {
   echo ""
@@ -28,12 +30,27 @@ if [ ! -d "$BACKEND_DIR" ]; then
   exit 1
 fi
 
+# 关闭已占用的端口
+kill_port() {
+  local port=$1
+  local pid=$(lsof -ti :"$port" 2>/dev/null)
+  if [ -n "$pid" ]; then
+    echo "[端口] 检测到端口 $port 已被占用 (PID: $pid)，正在释放..."
+    kill -9 $pid 2>/dev/null
+    sleep 0.5
+  fi
+}
+
 echo "==============================="
 echo "  MythWriter 一键启动"
 echo "==============================="
 
+# 释放端口
+kill_port $BACKEND_PORT
+kill_port $FRONTEND_PORT
+
 # 启动后端
-echo "[后端] 启动 API 服务 (port 3000)..."
+echo "[后端] 启动 API 服务 (port $BACKEND_PORT)..."
 cd "$BACKEND_DIR" && npm run dev &
 BACKEND_PID=$!
 
@@ -43,9 +60,9 @@ cd "$FRONTEND_DIR" && pnpm dev &
 FRONTEND_PID=$!
 
 echo ""
-echo "前端: http://localhost:1420"
-echo "后端: http://localhost:3000"
-echo "后端健康检查: http://localhost:3000/api/health"
+echo "前端: http://localhost:$FRONTEND_PORT"
+echo "后端: http://localhost:$BACKEND_PORT"
+echo "后端健康检查: http://localhost:$BACKEND_PORT/api/health"
 echo ""
 echo "按 Ctrl+C 停止所有服务"
 echo "==============================="
