@@ -14,7 +14,7 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-[160px] overflow-hidden rounded-lg border border-surface-200 bg-white p-1 shadow-lg animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 dark:border-surface-700 dark:bg-surface-900",
+        "z-50 min-w-[160px] overflow-hidden rounded-lg border border-surface-200 bg-white p-1 shadow-lg dropdown-content-enter dark:border-surface-700 dark:bg-surface-900",
         className
       )}
       {...props}
@@ -27,12 +27,14 @@ const DropdownMenuItem = React.forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean;
+    index?: number;
   }
->(({ className, inset, ...props }, ref) => (
+>(({ className, inset, index = 0, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     ref={ref}
+    style={{ animationDelay: `${index * 50}ms` }}
     className={cn(
-      "relative flex cursor-pointer select-none items-center gap-2 rounded-md px-3 py-2 text-sm text-surface-700 outline-none transition-all duration-200 hover:bg-surface-100 hover:text-surface-900 active:scale-[0.97] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-surface-100",
+      "dropdown-item-enter relative flex cursor-pointer select-none items-center gap-2 rounded-md px-3 py-2 text-sm text-surface-700 outline-none transition-all duration-200 hover:bg-surface-100 hover:text-surface-900 active:scale-[0.97] data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-surface-100 group group-dropdown-item",
       inset && "pl-8",
       className
     )}
@@ -59,7 +61,7 @@ const DropdownMenuLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Label
     ref={ref}
-    className={cn("px-3 py-1.5 text-xs font-semibold text-surface-400 uppercase tracking-wider", className)}
+    className={cn("px-3 py-1.5 text-xs font-semibold text-surface-400 uppercase tracking-wider dropdown-item-enter", className)}
     {...props}
   />
 ));

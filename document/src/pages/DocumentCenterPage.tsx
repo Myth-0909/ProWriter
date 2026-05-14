@@ -151,22 +151,22 @@ export function DocumentCenterPage({
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="lg" className="gap-1">
+                  <Button size="lg" className="gap-1 group">
                     <Plus className="h-3.5 w-3.5" />
                     <span>{t("documents.newDocument")}</span>
-                    <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                    <ChevronDown className="h-3.5 w-3.5 opacity-60 transition-transform duration-300 group-data-[state=open]:rotate-180" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[220px]">
                   <DropdownMenuLabel>{t("documents.selectCategory")}</DropdownMenuLabel>
                   {(
                     Object.entries(categoryLabels) as [DocumentCategory, { zh: string; en: string }][]
-                  ).map(([cat, label]) => {
+                  ).map(([cat, label], idx) => {
                     const Icon = iconByCategory[cat];
                     const colorClass = colorByCategory[cat];
                     return (
-                      <DropdownMenuItem key={cat} onClick={() => handleNewDocument(cat)}>
-                        <div className={`flex h-7 w-7 items-center justify-center rounded-md ${colorClass.split(" ")[0]}`}>
+                      <DropdownMenuItem key={cat} index={idx} onClick={() => handleNewDocument(cat)}>
+                        <div className={`flex h-7 w-7 items-center justify-center rounded-md dropdown-item-icon ${colorClass.split(" ")[0]}`}>
                           <Icon className={`h-3.5 w-3.5 ${colorClass.split(" ")[1]}`} />
                         </div>
                         <span>{label.zh}</span>

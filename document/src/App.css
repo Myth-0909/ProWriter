@@ -165,6 +165,41 @@ body.dark {
   to { transform: scaleX(1); opacity: 1; }
 }
 
+/* Dropdown content: scale + fade with gentle bounce */
+@keyframes dropdownContentIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(-4px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Dropdown item: slide in from left with fade */
+@keyframes dropdownItemIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Icon hover: gentle scale + rotate */
+@keyframes iconPopIn {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.25) rotate(-10deg); }
+  100% { transform: scale(1.2) rotate(0deg); }
+}
+
 /* ==================== Animation Utility Classes ==================== */
 
 .toast-enter {
@@ -177,6 +212,29 @@ body.dark {
 
 .fade-in {
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ==================== Dropdown Animation Utilities ==================== */
+
+/* Content panel entrance */
+.dropdown-content-enter {
+  animation: dropdownContentIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+}
+
+/* Individual item entrance — staggered via inline style delay */
+.dropdown-item-enter {
+  opacity: 0;
+  animation: dropdownItemIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Icon pops on menu item hover */
+.dropdown-item-icon {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.group-dropdown-item:hover .dropdown-item-icon {
+  transform: scale(1.2) rotate(-5deg);
 }
 
 /* ==================== Input & Editor Base ==================== */

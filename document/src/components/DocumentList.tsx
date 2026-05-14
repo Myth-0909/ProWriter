@@ -112,17 +112,18 @@ export function DocumentList({ activeId, onSelect }: DocumentListProps) {
                         <DropdownMenuLabel>{t("documents.switchCategory")}</DropdownMenuLabel>
                         {(
                           Object.entries(categoryI18nKey) as [DocumentCategory, string][]
-                        ).map(([cat]) => {
+                        ).map(([cat], idx) => {
                           const CatIcon = iconByCategory[cat];
                           const catColor = categoryColors[cat];
                           const isCurrent = doc.category === cat;
                           return (
                             <DropdownMenuItem
                               key={cat}
+                              index={idx}
                               onClick={(e) => handleChangeCategory(e, doc.id, cat)}
                               className={isCurrent ? "bg-surface-100 dark:bg-surface-800" : ""}
                             >
-                              <div className={`flex h-5 w-5 items-center justify-center rounded ${catColor.split(" ")[0]}`}>
+                              <div className={`flex h-5 w-5 items-center justify-center rounded dropdown-item-icon ${catColor.split(" ")[0]}`}>
                                 <CatIcon className={`h-3 w-3 ${catColor.split(" ")[1]}`} />
                               </div>
                               <span>{t(categoryI18nKey[cat])}</span>
