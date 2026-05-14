@@ -6,38 +6,25 @@ interface PageTransitionProps {
 }
 
 export function PageTransition({ children, pageKey }: PageTransitionProps) {
-  const [state, setState] = useState<"enter" | "idle" | "exit">("enter");
+  const [animKey, setAnimKey] = useState(0);
   const prevKeyRef = useRef(pageKey);
-  const childrenRef = useRef(children);
-
-  // Always keep the latest children visible
-  childrenRef.current = children;
 
   useEffect(() => {
     if (pageKey !== prevKeyRef.current) {
-      // Start exit animation
-      setState("exit");
-      const timer = setTimeout(() => {
-        prevKeyRef.current = pageKey;
-        setState("enter");
-      }, 180);
-      return () => clearTimeout(timer);
+      prevKeyRef.current = pageKey;
+      setAnimKey((k) => k + 1);
     }
   }, [pageKey]);
 
   return (
     <div
+      key={animKey}
       className="h-full w-full"
       style={{
-        animation:
-          state === "enter"
-            ? "pageEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards"
-            : state === "exit"
-              ? "pageExit 0.18s cubic-bezier(0.4, 0, 0.2, 1) forwards"
-              : "none",
+        animation: "pageEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards",
       }}
     >
-      {childrenRef.current}
+      {children}
     </div>
   );
 }

@@ -16,7 +16,7 @@ import {
   Sun,
   Moon,
   Settings,
-  Ellipsis,
+  ChevronDown,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useI18n } from "@/components/I18nProvider";
@@ -67,7 +67,7 @@ export function TopAppBar({
           variant="ghost"
           size="icon"
           onClick={onToggleSidebar}
-          className="h-8 w-8"
+          className="h-8 w-8 text-surface-600 hover:text-surface-900 dark:text-surface-300 dark:hover:text-surface-100"
           title={sidebarCollapsed ? t("nav.expand") : t("nav.collapse")}
         >
           {sidebarCollapsed ? (
@@ -82,30 +82,40 @@ export function TopAppBar({
       <div className="flex items-center justify-end gap-2">
         {variant === "editor" && (
           <>
-            <Button variant="ghost" size="sm" className="gap-1.5" onClick={onShare}>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-surface-600 hover:text-surface-900 dark:text-surface-300 dark:hover:text-surface-100" onClick={onShare}>
               <Share2 className="h-3.5 w-3.5" />
               <span className="text-xs">{t("topbar.share")}</span>
             </Button>
-            <Button variant="ghost" size="sm" className="gap-1.5" onClick={onExport}>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-surface-600 hover:text-surface-900 dark:text-surface-300 dark:hover:text-surface-100" onClick={onExport}>
               <Download className="h-3.5 w-3.5" />
               <span className="text-xs">{t("topbar.export")}</span>
             </Button>
           </>
         )}
 
-        {/* More menu */}
+        {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800"
-            >
-              <Ellipsis className="h-4 w-4" />
-            </Button>
+            <button className="flex items-center gap-2 rounded-full py-1 pl-1.5 pr-2.5 text-sm transition-colors hover:bg-surface-100 dark:hover:bg-surface-800 cursor-pointer">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="avatar"
+                  className="h-7 w-7 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-500 text-[10px] font-semibold text-white">
+                  {initials}
+                </div>
+              )}
+              <span className="max-w-[80px] truncate text-sm font-medium text-surface-700 dark:text-surface-200">
+                {user?.name || "User"}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 text-surface-400" />
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[240px]">
-            {/* User info */}
+            {/* User info header */}
             {user && (
               <>
                 <div className="flex items-center gap-3 px-3 py-3">
