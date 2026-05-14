@@ -7,8 +7,6 @@ import {
   LogOut,
   Languages,
 } from "lucide-react";
-import { ShinyText } from "@/components/ShinyText";
-import { useTheme } from "@/components/ThemeProvider";
 import { useI18n } from "@/components/I18nProvider";
 
 interface TopAppBarProps {
@@ -31,12 +29,10 @@ export function TopAppBar({
   onToggleSidebar,
 }: TopAppBarProps) {
   const { t, toggleLang } = useI18n();
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-surface-200 bg-white px-6 dark:border-surface-800 dark:bg-surface-950">
-      {/* Left: Sidebar Toggle + Logo + Title */}
+      {/* Left: Sidebar Toggle only */}
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -51,18 +47,6 @@ export function TopAppBar({
             <PanelLeftClose className="h-4 w-4" />
           )}
         </Button>
-
-        <div className="flex items-center gap-2">
-          <img src="/Logo.png" alt="MythWriter" className="h-7 w-7 rounded-md object-contain" />
-          <ShinyText
-            text="MythWriter"
-            color={isDark ? "#f1f5f9" : "#0f172a"}
-            shineColor={isDark ? "#60a5fa" : "#3b82f6"}
-            speed={3}
-            direction="right"
-            className="text-sm font-bold tracking-tight select-none"
-          />
-        </div>
       </div>
 
       {/* Right */}
@@ -81,10 +65,9 @@ export function TopAppBar({
         )}
 
         <Button
-          variant="ghost"
           size="sm"
           onClick={toggleLang}
-          className="gap-1.5 border border-surface-300 bg-surface-100 hover:bg-surface-200 dark:border-surface-600 dark:bg-surface-800 dark:hover:bg-surface-700"
+          className="gap-1.5 border border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100 hover:text-brand-800 active:scale-95 transition-all cursor-pointer dark:border-brand-800 dark:bg-brand-950 dark:text-brand-300 dark:hover:bg-brand-900 dark:hover:text-brand-200"
         >
           <Languages className="h-3.5 w-3.5" />
           <span className="text-xs">{t("topbar.zh")}</span>
