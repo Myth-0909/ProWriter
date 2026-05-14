@@ -115,7 +115,11 @@ export function SettingsPage({ activeNav = "settings", onNavChange, onLogout, si
 
                 {/* Avatar */}
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="relative">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="group relative cursor-pointer rounded-full"
+                  >
                     {avatarUrl ? (
                       <img
                         src={avatarUrl}
@@ -127,17 +131,14 @@ export function SettingsPage({ activeNav = "settings", onNavChange, onLogout, si
                         {initials || "?"}
                       </div>
                     )}
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-surface-200 border-2 border-white hover:bg-surface-300 cursor-pointer dark:bg-surface-700 dark:border-surface-900 dark:hover:bg-surface-600"
-                    >
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                       {uploading ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <Loader2 className="h-5 w-5 animate-spin text-white" />
                       ) : (
-                        <Camera className="h-3 w-3" />
+                        <Camera className="h-5 w-5 text-white" />
                       )}
-                    </button>
+                    </div>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -145,7 +146,7 @@ export function SettingsPage({ activeNav = "settings", onNavChange, onLogout, si
                       className="hidden"
                       onChange={handleAvatarUpload}
                     />
-                  </div>
+                  </button>
                   <div>
                     <p className="text-sm font-medium text-surface-800 dark:text-surface-200">
                       {t("settings.name")}

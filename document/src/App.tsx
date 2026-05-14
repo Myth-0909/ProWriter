@@ -7,6 +7,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { TrashPage } from "@/pages/TrashPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { PageTransition } from "@/components/PageTransition";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
 import { useAuth } from "@/auth";
@@ -68,24 +69,26 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-white dark:bg-surface-950">
-      {currentPage === "editor" && (
-        <EditorPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} activeDoc={editorDocId} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      )}
-      {currentPage === "documents" && (
-        <DocumentCenterPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} onOpenDoc={handleOpenDoc} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      )}
-      {currentPage === "favorites" && (
-        <FavoritesPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} onOpenDoc={handleOpenDoc} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      )}
-      {currentPage === "share" && (
-        <SharePanelPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      )}
-      {currentPage === "trash" && (
-        <TrashPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      )}
-      {currentPage === "settings" && (
-        <SettingsPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      )}
+      <PageTransition pageKey={currentPage}>
+        {currentPage === "editor" && (
+          <EditorPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} activeDoc={editorDocId} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
+        )}
+        {currentPage === "documents" && (
+          <DocumentCenterPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} onOpenDoc={handleOpenDoc} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
+        )}
+        {currentPage === "favorites" && (
+          <FavoritesPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} onOpenDoc={handleOpenDoc} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
+        )}
+        {currentPage === "share" && (
+          <SharePanelPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
+        )}
+        {currentPage === "trash" && (
+          <TrashPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
+        )}
+        {currentPage === "settings" && (
+          <SettingsPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
+        )}
+      </PageTransition>
 
       <ConfirmModal
         open={logoutConfirm}

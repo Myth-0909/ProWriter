@@ -37,7 +37,7 @@ export function FavoritesPage({ activeNav = "favorites", onNavChange, onLogout, 
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-white dark:bg-surface-950">
-      <TopAppBar variant="documents" onLogout={onLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={onToggleSidebar} />
+      <TopAppBar variant="documents" onLogout={onLogout} onSettings={() => onNavChange?.("settings")} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={onToggleSidebar} />
       <div className="flex flex-1 overflow-hidden">
         <SideNavBar activeNav={activeNav} onNavChange={onNavChange ?? (() => {})} collapsed={sidebarCollapsed} />
         <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950">

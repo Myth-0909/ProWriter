@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 
 interface PageTransitionProps {
   children: ReactNode;
@@ -6,45 +6,38 @@ interface PageTransitionProps {
 }
 
 export function PageTransition({ children, pageKey }: PageTransitionProps) {
-  const [currentKey, setCurrentKey] = useState(pageKey);
-  const [isEntering, setIsEntering] = useState(false);
-  const [showContent, setShowContent] = useState(true);
+  const [state, setState] = useState<"enter" | "idle" | "exit">("enter");
+  const prevKeyRef = useRef(pageKey);
+  const childrenRef = useRef(children);
+
+  // Always keep the latest children visible
+  childrenRef.current = children;
 
   useEffect(() => {
-    if (pageKey !== currentKey) {
-      setIsEntering(true);
-      setShowContent(false);
-
-      // After exit animation, switch content and play enter animation
-      const exitTimer = setTimeout(() => {
-        setCurrentKey(pageKey);
-        setShowContent(true);
-        // Small delay to let DOM update before enter animation
-        requestAnimationFrame(() => {
-          setIsEntering(false);
-        });
-      }, 200);
-
-      return () => clearTimeout(exitTimer);
-    } else {
-      // Initial mount - play enter animation
-      setIsEntering(false);
-      setShowContent(true);
+    if (pageKey !== prevKeyRef.current) {
+      // Start exit animation
+      setState("exit");
+      const timer = setTimeout(() => {
+        prevKeyRef.current = pageKey;
+        setState("enter");
+      }, 180);
+      return () => clearTimeout(timer);
     }
-  }, [pageKey, currentKey]);
+  }, [pageKey]);
 
   return (
     <div
       className="h-full w-full"
       style={{
-        animation: isEntering
-          ? "pageExit 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards"
-          : showContent
+        animation:
+          state === "enter"
             ? "pageEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards"
-            : "none",
+            : state === "exit"
+              ? "pageExit 0.18s cubic-bezier(0.4, 0, 0.2, 1) forwards"
+              : "none",
       }}
     >
-      {showContent ? children : null}
+      {childrenRef.current}
     </div>
   );
 }

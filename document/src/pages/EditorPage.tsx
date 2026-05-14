@@ -71,10 +71,10 @@ export function EditorPage({ activeNav = "documents", onNavChange, onLogout, act
     <div className="flex h-screen w-full flex-col overflow-hidden bg-white dark:bg-surface-950">
       <TopAppBar
         variant="editor"
-        title="MythWriter"
         onShare={() => setShareOpen(true)}
         onExport={handleExport}
         onLogout={onLogout}
+        onSettings={() => onNavChange?.("settings")}
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={onToggleSidebar}
       />

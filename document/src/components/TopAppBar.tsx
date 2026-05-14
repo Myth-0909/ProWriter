@@ -1,13 +1,26 @@
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
   Share2,
   Download,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
   Languages,
+  Sun,
+  Moon,
+  Settings,
+  Ellipsis,
 } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 import { useI18n } from "@/components/I18nProvider";
+import { useAuth } from "@/auth";
 
 interface TopAppBarProps {
   variant?: "editor" | "documents" | "trash" | "settings";
@@ -15,20 +28,36 @@ interface TopAppBarProps {
   onShare?: () => void;
   onExport?: () => void;
   onLogout?: () => void;
+  onSettings?: () => void;
   sidebarCollapsed?: boolean;
   onToggleSidebar?: () => void;
 }
 
 export function TopAppBar({
   variant = "editor",
-  title: _title,
   onShare,
   onExport,
   onLogout,
+  onSettings,
   sidebarCollapsed = false,
   onToggleSidebar,
 }: TopAppBarProps) {
-  const { t, toggleLang } = useI18n();
+  const { t, lang, toggleLang } = useI18n();
+  const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
+
+  const avatarUrl = user?.avatar
+    ? `http://localhost:3000/uploads/${user.avatar}`
+    : null;
+
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "?";
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-surface-200 bg-white px-6 dark:border-surface-800 dark:bg-surface-950">
@@ -64,26 +93,85 @@ export function TopAppBar({
           </>
         )}
 
-        <Button
-          size="sm"
-          onClick={toggleLang}
-          className="gap-1.5 border border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100 hover:text-brand-800 active:scale-95 transition-all cursor-pointer dark:border-brand-800 dark:bg-brand-950 dark:text-brand-300 dark:hover:bg-brand-900 dark:hover:text-brand-200"
-        >
-          <Languages className="h-3.5 w-3.5" />
-          <span className="text-xs">{t("topbar.zh")}</span>
-        </Button>
+        {/* More menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800"
+            >
+              <Ellipsis className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[240px]">
+            {/* User info */}
+            {user && (
+              <>
+                <div className="flex items-center gap-3 px-3 py-3">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="avatar"
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-sm font-semibold text-white">
+                      {initials}
+                    </div>
+                  )}
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="truncate text-sm font-medium text-surface-900 dark:text-surface-100">
+                      {user.name}
+                    </span>
+                    <span className="truncate text-xs text-surface-500">
+                      {user.email}
+                    </span>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+              </>
+            )}
 
-        {onLogout && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLogout}
-            className="gap-1.5 text-surface-500 hover:text-red-500 dark:text-surface-400 dark:hover:text-red-400"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span className="text-xs">{t("topbar.logout")}</span>
-          </Button>
-        )}
+            {/* Theme toggle */}
+            <DropdownMenuItem onClick={toggleTheme}>
+              {theme === "light" ? (
+                <Moon className="h-4 w-4" />
+              ) : (
+                <Sun className="h-4 w-4" />
+              )}
+              <span>{theme === "light" ? t("nav.darkMode") : t("nav.lightMode")}</span>
+            </DropdownMenuItem>
+
+            {/* Language switch */}
+            <DropdownMenuItem onClick={toggleLang}>
+              <Languages className="h-4 w-4" />
+              <span>{lang === "zh" ? "English" : "中文"}</span>
+            </DropdownMenuItem>
+
+            {/* Settings */}
+            {onSettings && (
+              <DropdownMenuItem onClick={onSettings}>
+                <Settings className="h-4 w-4" />
+                <span>{t("settings.title")}</span>
+              </DropdownMenuItem>
+            )}
+
+            {/* Logout */}
+            {onLogout && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={onLogout}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>{t("topbar.logout")}</span>
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

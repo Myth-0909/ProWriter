@@ -133,6 +133,7 @@ export function DocumentCenterPage({
       <TopAppBar
         variant="documents"
         onLogout={onLogout}
+        onSettings={() => onNavChange?.("settings")}
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={onToggleSidebar}
       />
