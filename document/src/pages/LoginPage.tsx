@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ForgotPasswordModal } from "@/components/ForgotPasswordModal";
+import { Waves } from "@/components/Waves";
+import { ShinyText } from "@/components/ShinyText";
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
@@ -20,6 +22,18 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [mode, setMode] = useState<Mode>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isDark, setIsDark] = useState(
+    () => document.documentElement.classList.contains("dark")
+  );
+
+  // Track dark mode changes
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   // Form fields
   const [name, setName] = useState("");
@@ -77,13 +91,35 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-surface-50 dark:bg-surface-950">
-      <div className="w-full max-w-[420px] rounded-2xl border border-surface-200 bg-white p-8 shadow-lg dark:border-surface-800 dark:bg-surface-900">
+    <div className="relative flex h-screen w-full items-center justify-center overflow-hidden bg-surface-50 dark:bg-surface-950">
+      {/* Animated waves background */}
+      <Waves
+        lineColor={isDark ? "#334155" : "#cbd5e1"}
+        backgroundColor="transparent"
+        waveSpeedX={0.015}
+        waveSpeedY={0.006}
+        waveAmpX={40}
+        waveAmpY={20}
+        xGap={12}
+        yGap={36}
+        friction={0.93}
+        tension={0.004}
+        maxCursorMove={120}
+        className="absolute inset-0 z-0 opacity-60 dark:opacity-40"
+      />
+
+      {/* Login card */}
+      <div className="relative z-10 w-full max-w-[420px] rounded-2xl border border-surface-200/80 bg-white/85 backdrop-blur-xl p-8 shadow-xl dark:border-surface-700/80 dark:bg-surface-900/85">
         {/* Logo */}
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-surface-900 dark:text-surface-100">
-            ProWriter
-          </h1>
+          <ShinyText
+            text="ProWriter"
+            color={isDark ? "#e2e8f0" : "#0f172a"}
+            shineColor={isDark ? "#60a5fa" : "#3b82f6"}
+            speed={2.5}
+            direction="right"
+            className="text-2xl font-bold tracking-tight"
+          />
           <p className="mt-1 text-sm text-surface-500">
             {mode === "login" ? t("login.welcomeBack") : t("login.createAccount")}
           </p>
