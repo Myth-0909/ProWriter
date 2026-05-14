@@ -167,23 +167,25 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
           className="flex flex-col gap-4"
         >
-          {/* Name field — animated expand/collapse */}
+          {/* Name field — always rendered, height animated via grid */}
           <div
             className={cn(
-              "overflow-hidden transition-all duration-500 ease-out",
-              mode === "register" ? "max-h-20 opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2"
+              "grid transition-all duration-500 ease-out",
+              mode === "register" ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
             )}
           >
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
-              <Input
-                type="text"
-                placeholder={t("login.fullName")}
-                className="pl-10 h-10 text-sm"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required={mode === "register"}
-              />
+            <div className="overflow-hidden">
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
+                <Input
+                  type="text"
+                  placeholder={t("login.fullName")}
+                  className="pl-10 h-10 text-sm"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required={mode === "register"}
+                />
+              </div>
             </div>
           </div>
 
@@ -222,17 +224,25 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </button>
           </div>
 
-          {mode === "login" && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setForgotOpen(true)}
-                className="text-xs text-surface-500 hover:text-surface-700 hover:underline cursor-pointer active:scale-[0.97] transition-transform dark:hover:text-surface-300"
-              >
-                {t("login.forgot")}
-              </button>
+          {/* Forgot password link — always rendered, height animated via grid */}
+          <div
+            className={cn(
+              "grid transition-all duration-500 ease-out",
+              mode === "login" ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+            )}
+          >
+            <div className="overflow-hidden">
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setForgotOpen(true)}
+                  className="text-xs text-surface-500 hover:text-surface-700 hover:underline cursor-pointer active:scale-[0.97] transition-transform dark:hover:text-surface-300"
+                >
+                  {t("login.forgot")}
+                </button>
+              </div>
             </div>
-          )}
+          </div>
 
           <Button
             type="submit"
