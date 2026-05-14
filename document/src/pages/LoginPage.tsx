@@ -5,7 +5,7 @@ import { ForgotPasswordModal } from "@/components/ForgotPasswordModal";
 import { Waves } from "@/components/Waves";
 import { ShinyText } from "@/components/ShinyText";
 import { cn } from "@/lib/utils";
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, Globe } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { api, setToken } from "@/api";
@@ -17,7 +17,7 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
-  const { t } = useI18n();
+  const { t, lang, toggleLang } = useI18n();
   const { toast } = useToast();
   const [mode, setMode] = useState<Mode>("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -108,6 +108,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         className="absolute inset-0 z-0 opacity-60 dark:opacity-40"
       />
 
+      {/* Language switch */}
+      <button
+        onClick={toggleLang}
+        className="absolute top-6 right-6 z-20 inline-flex items-center gap-1.5 rounded-full border border-surface-200/60 bg-white/70 backdrop-blur-md px-3 py-1.5 text-xs font-medium text-surface-600 shadow-sm transition-all duration-300 hover:bg-white hover:text-surface-900 hover:shadow-md active:scale-95 dark:border-surface-700/60 dark:bg-surface-900/70 dark:text-surface-400 dark:hover:bg-surface-900 dark:hover:text-surface-200"
+      >
+        <Globe className="h-3.5 w-3.5" />
+        <span>{lang === "zh" ? "English" : "中文"}</span>
+      </button>
+
       {/* Login card */}
       <div className="relative z-10 w-full max-w-[420px] rounded-2xl border border-surface-200/80 bg-white/85 backdrop-blur-xl p-8 shadow-xl dark:border-surface-700/80 dark:bg-surface-900/85">
         {/* Logo */}
@@ -158,7 +167,13 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
           className="flex flex-col gap-4"
         >
-          {mode === "register" && (
+          {/* Name field — animated expand/collapse */}
+          <div
+            className={cn(
+              "overflow-hidden transition-all duration-500 ease-out",
+              mode === "register" ? "max-h-20 opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2"
+            )}
+          >
             <div className="relative">
               <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
               <Input
@@ -167,10 +182,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 className="pl-10 h-10 text-sm"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required
+                required={mode === "register"}
               />
             </div>
-          )}
+          </div>
 
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-400" />
