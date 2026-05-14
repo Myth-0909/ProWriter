@@ -29,9 +29,11 @@ interface SharePanelPageProps {
   activeNav?: NavId;
   onNavChange?: (id: NavId) => void;
   onLogout?: () => void;
+  sidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
-export function SharePanelPage({ activeNav = "documents", onNavChange, onLogout }: SharePanelPageProps) {
+export function SharePanelPage({ activeNav = "documents", onNavChange, onLogout, sidebarCollapsed = false, onToggleSidebar }: SharePanelPageProps) {
   const [shareOpen, setShareOpen] = useState(true);
 
   return (
@@ -41,10 +43,12 @@ export function SharePanelPage({ activeNav = "documents", onNavChange, onLogout 
         title="ProWriter"
         onShare={() => setShareOpen(true)}
         onLogout={onLogout}
+        sidebarCollapsed={sidebarCollapsed}
+        onToggleSidebar={onToggleSidebar}
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <SideNavBar activeNav={activeNav} onNavChange={onNavChange ?? (() => {})} />
+        <SideNavBar activeNav={activeNav} onNavChange={onNavChange ?? (() => {})} collapsed={sidebarCollapsed} />
 
         <div className="flex w-[320px] shrink-0 flex-col border-r border-surface-200 dark:border-surface-800">
           <div className="border-b border-surface-200 px-4 py-4 dark:border-surface-800">

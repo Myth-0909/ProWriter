@@ -1,18 +1,37 @@
-import { Search, Star, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Search, Star, Trash2,
+  BookOpen, FileText, Palette, Lightbulb, Target,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/components/I18nProvider";
 import { useDocuments } from "@/store";
 import { useToast } from "@/components/Toast";
+import { ConfirmModal } from "@/components/ConfirmModal";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import { categoryI18nKey, categoryColors, type DocumentCategory } from "@/types";
+
+const iconByCategory: Record<DocumentCategory, LucideIcon> = {
+  sciFi: BookOpen, fantasy: FileText, design: Palette,
+  journal: Lightbulb, planning: Target, research: Search, general: FileText,
+};
 
 interface DocumentListProps {
   activeId?: string;
   onSelect?: (id: string) => void;
 }
 
-export function DocumentList({ activeId = "1", onSelect }: DocumentListProps) {
+export function DocumentList({ activeId, onSelect }: DocumentListProps) {
   const { t } = useI18n();
   const { toast } = useToast();
-  const { documents, toggleFavorite, moveToTrash } = useDocuments();
+  const { documents, toggleFavorite, moveToTrash, updateDocument } = useDocuments();
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const isActive = (id: string) => id === activeId;
 
   const handleToggleFavorite = (e: React.MouseEvent, id: string) => {
@@ -22,12 +41,26 @@ export function DocumentList({ activeId = "1", onSelect }: DocumentListProps) {
     toast(doc?.isFavorite ? t("toast.favRemoved") : t("toast.favAdded"), "success");
   };
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    moveToTrash(id);
-    const doc = documents.find((d) => d.id === id);
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    moveToTrash(deleteTarget);
+    const doc = documents.find((d) => d.id === deleteTarget);
     if (doc) {
       toast(`"${doc.title}" ${t("toast.movedToTrash")}`, "info");
+    }
+    setDeleteTarget(null);
+  };
+
+  const handleChangeCategory = (e: React.MouseEvent, docId: string, cat: DocumentCategory) => {
+    e.stopPropagation();
+    const doc = documents.find((d) => d.id === docId);
+    if (doc && cat !== doc.category) {
+      updateDocument(docId, { category: cat });
     }
   };
 
@@ -48,6 +81,8 @@ export function DocumentList({ activeId = "1", onSelect }: DocumentListProps) {
         <div className="flex flex-col gap-1">
           {documents.map((doc) => {
             const active = isActive(doc.id);
+            const Icon = iconByCategory[doc.category];
+            const colorClass = categoryColors[doc.category];
             return (
               <button
                 key={doc.id}
@@ -60,12 +95,51 @@ export function DocumentList({ activeId = "1", onSelect }: DocumentListProps) {
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className={cn(
-                    "text-sm font-medium truncate",
-                    active ? "text-surface-900 dark:text-surface-100" : "text-surface-700 dark:text-surface-300"
-                  )}>
-                    {doc.title}
-                  </h3>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {/* Category badge - clickable to change type */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <span
+                          className={`shrink-0 inline-flex items-center gap-0.5 h-5 px-1.5 rounded text-[10px] font-medium cursor-pointer border transition-colors ${colorClass.split(" ")[0]} ${colorClass.split(" ")[1]} hover:ring-1 hover:ring-surface-300 dark:hover:ring-surface-600`}
+                          title={t("documents.clickToSwitch")}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Icon className="h-2.5 w-2.5" />
+                          <span>{t(categoryI18nKey[doc.category])}</span>
+                        </span>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-[170px]">
+                        <DropdownMenuLabel>{t("documents.switchCategory")}</DropdownMenuLabel>
+                        {(
+                          Object.entries(categoryI18nKey) as [DocumentCategory, string][]
+                        ).map(([cat]) => {
+                          const CatIcon = iconByCategory[cat];
+                          const catColor = categoryColors[cat];
+                          const isCurrent = doc.category === cat;
+                          return (
+                            <DropdownMenuItem
+                              key={cat}
+                              onClick={(e) => handleChangeCategory(e, doc.id, cat)}
+                              className={isCurrent ? "bg-surface-100 dark:bg-surface-800" : ""}
+                            >
+                              <div className={`flex h-5 w-5 items-center justify-center rounded ${catColor.split(" ")[0]}`}>
+                                <CatIcon className={`h-3 w-3 ${catColor.split(" ")[1]}`} />
+                              </div>
+                              <span>{t(categoryI18nKey[cat])}</span>
+                              {isCurrent && <span className="ml-auto text-[10px] text-brand-500">✓</span>}
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <h3 className={cn(
+                      "text-sm font-medium truncate",
+                      active ? "text-surface-900 dark:text-surface-100" : "text-surface-700 dark:text-surface-300"
+                    )}>
+                      {doc.title}
+                    </h3>
+                  </div>
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                     <span
                       onClick={(e) => handleToggleFavorite(e, doc.id)}
@@ -77,19 +151,30 @@ export function DocumentList({ activeId = "1", onSelect }: DocumentListProps) {
                       <Star className="h-3.5 w-3.5" fill={doc.isFavorite ? "currentColor" : "none"} />
                     </span>
                     <span
-                      onClick={(e) => handleDelete(e, doc.id)}
+                      onClick={(e) => handleDeleteClick(e, doc.id)}
                       className="p-0.5 rounded hover:bg-red-100 text-surface-400 hover:text-red-500 cursor-pointer transition-colors dark:hover:bg-red-950"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </span>
                   </div>
                 </div>
-                <p className="line-clamp-2 text-xs leading-relaxed text-surface-500">{doc.preview}</p>
+                <p className="line-clamp-2 text-xs leading-relaxed text-surface-500 ml-7">{doc.preview}</p>
               </button>
             );
           })}
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={t("confirm.deleteTitle")}
+        description={t("confirm.deleteDesc")}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        variant="danger"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

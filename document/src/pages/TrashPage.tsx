@@ -14,49 +14,60 @@ interface TrashPageProps {
   activeNav?: NavId;
   onNavChange?: (id: NavId) => void;
   onLogout?: () => void;
+  sidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
-export function TrashPage({ activeNav = "trash", onNavChange, onLogout }: TrashPageProps) {
+export function TrashPage({ activeNav = "trash", onNavChange, onLogout, sidebarCollapsed = false, onToggleSidebar }: TrashPageProps) {
   const { t } = useI18n();
   const { toast } = useToast();
-  const { trash, restoreFromTrash, permanentlyDelete, emptyTrash } = useDocuments();
-  const [loading, setLoading] = useState(false);
+  const { trash, loading, restoreFromTrash, permanentlyDelete, emptyTrash } = useDocuments();
+  const [actionLoading, setActionLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [emptyTrashConfirm, setEmptyTrashConfirm] = useState(false);
 
-  const handleRestore = (id: string, title: string) => {
-    setLoading(true);
-    setTimeout(() => {
-      restoreFromTrash(id);
-      setLoading(false);
+  const handleRestore = async (id: string, title: string) => {
+    setActionLoading(true);
+    try {
+      await restoreFromTrash(id);
       toast(`${t("trash.restored")}: ${title}`, "success");
-    }, 500);
+    } catch (error: any) {
+      toast(error.message || t("toast.restoreFailed"), "error");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const handleDeleteForever = (id: string, title: string) => {
-    setLoading(true);
-    setTimeout(() => {
-      permanentlyDelete(id);
-      setLoading(false);
+  const handleDeleteForever = async (id: string, title: string) => {
+    setActionLoading(true);
+    try {
+      await permanentlyDelete(id);
       toast(`${t("trash.deleted")}: ${title}`, "error");
-    }, 500);
+    } catch (error: any) {
+      toast(error.message || t("toast.deleteFailed"), "error");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const handleEmptyTrash = () => {
-    setLoading(true);
-    setTimeout(() => {
-      emptyTrash();
-      setLoading(false);
+  const handleEmptyTrash = async () => {
+    setActionLoading(true);
+    try {
+      await emptyTrash();
       toast(t("trash.deleted"), "error");
-    }, 500);
+    } catch (error: any) {
+      toast(error.message || t("toast.emptyFailed"), "error");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-white dark:bg-surface-950 relative">
-      {loading && <LoadingOverlay />}
-      <TopAppBar variant="trash" onLogout={onLogout} />
+      {(loading || actionLoading) && <LoadingOverlay />}
+      <TopAppBar variant="trash" onLogout={onLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={onToggleSidebar} />
       <div className="flex flex-1 overflow-hidden">
-        <SideNavBar activeNav={activeNav} onNavChange={onNavChange ?? (() => {})} />
+        <SideNavBar activeNav={activeNav} onNavChange={onNavChange ?? (() => {})} collapsed={sidebarCollapsed} />
         <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950">
           <div className="mx-auto max-w-[960px] px-20 py-20">
             <div className="mb-8 flex items-start justify-between">

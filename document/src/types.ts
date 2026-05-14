@@ -9,6 +9,7 @@ export interface Document {
   isFavorite: boolean;
   isDeleted: boolean;
   deletedAt?: string;
+  userId?: string;
 }
 
 export type DocumentCategory = "sciFi" | "fantasy" | "design" | "journal" | "planning" | "research" | "general";
@@ -31,6 +32,17 @@ export const categoryIcons: Record<DocumentCategory, string> = {
   planning: "Target",
   research: "Search",
   general: "FileText",
+};
+
+// Maps category to i18n card.* key
+export const categoryI18nKey: Record<DocumentCategory, "card.sciFi" | "card.fantasy" | "card.design" | "card.journal" | "card.planning" | "card.research" | "card.general"> = {
+  sciFi: "card.sciFi",
+  fantasy: "card.fantasy",
+  design: "card.design",
+  journal: "card.journal",
+  planning: "card.planning",
+  research: "card.research",
+  general: "card.general",
 };
 
 export const categoryColors: Record<DocumentCategory, string> = {

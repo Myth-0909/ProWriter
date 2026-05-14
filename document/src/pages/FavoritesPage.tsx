@@ -27,17 +27,19 @@ interface FavoritesPageProps {
   onNavChange?: (id: NavId) => void;
   onLogout?: () => void;
   onOpenDoc?: (id: string) => void;
+  sidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
-export function FavoritesPage({ activeNav = "favorites", onNavChange, onLogout, onOpenDoc }: FavoritesPageProps) {
+export function FavoritesPage({ activeNav = "favorites", onNavChange, onLogout, onOpenDoc, sidebarCollapsed = false, onToggleSidebar }: FavoritesPageProps) {
   const { t } = useI18n();
   const { favorites } = useDocuments();
 
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-white dark:bg-surface-950">
-      <TopAppBar variant="documents" onLogout={onLogout} />
+      <TopAppBar variant="documents" onLogout={onLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={onToggleSidebar} />
       <div className="flex flex-1 overflow-hidden">
-        <SideNavBar activeNav={activeNav} onNavChange={onNavChange ?? (() => {})} />
+        <SideNavBar activeNav={activeNav} onNavChange={onNavChange ?? (() => {})} collapsed={sidebarCollapsed} />
         <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950">
           <div className="mx-auto max-w-[1200px] px-20 py-20">
             <div className="mb-10">

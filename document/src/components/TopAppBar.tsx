@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
-import { Separator } from "@/components/ui/separator";
 import {
   Share2,
   Download,
-  Grid3X3,
-  List as ListIcon,
+  PanelLeftClose,
+  PanelLeftOpen,
   LogOut,
   Languages,
 } from "lucide-react";
@@ -17,8 +15,8 @@ interface TopAppBarProps {
   onShare?: () => void;
   onExport?: () => void;
   onLogout?: () => void;
-  viewMode?: "grid" | "list";
-  onViewModeChange?: (mode: "grid" | "list") => void;
+  sidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export function TopAppBar({
@@ -27,38 +25,28 @@ export function TopAppBar({
   onShare,
   onExport,
   onLogout,
-  viewMode = "grid",
-  onViewModeChange,
+  sidebarCollapsed = false,
+  onToggleSidebar,
 }: TopAppBarProps) {
   const { t, toggleLang } = useI18n();
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-surface-200 bg-white px-6 dark:border-surface-800 dark:bg-surface-950">
-      {/* Left */}
+      {/* Left: Sidebar Toggle */}
       <div className="flex items-center gap-3 w-[200px]">
-        {variant === "documents" && (
-          <div className="flex items-center gap-3">
-            <Separator orientation="vertical" className="h-4" />
-            <div className="flex items-center gap-0.5">
-              <Toggle
-                size="sm"
-                pressed={viewMode === "grid"}
-                onPressedChange={() => onViewModeChange?.("grid")}
-                aria-label={t("topbar.gridView")}
-              >
-                <Grid3X3 className="h-3.5 w-3.5" />
-              </Toggle>
-              <Toggle
-                size="sm"
-                pressed={viewMode === "list"}
-                onPressedChange={() => onViewModeChange?.("list")}
-                aria-label={t("topbar.listView")}
-              >
-                <ListIcon className="h-3.5 w-3.5" />
-              </Toggle>
-            </div>
-          </div>
-        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleSidebar}
+          className="h-8 w-8"
+          title={sidebarCollapsed ? t("nav.expand") : t("nav.collapse")}
+        >
+          {sidebarCollapsed ? (
+            <PanelLeftOpen className="h-4 w-4" />
+          ) : (
+            <PanelLeftClose className="h-4 w-4" />
+          )}
+        </Button>
       </div>
 
       {/* Center - Logo */}
@@ -66,14 +54,11 @@ export function TopAppBar({
         <h1 className="text-sm font-bold tracking-tight text-surface-900 dark:text-surface-100 select-none">
           ProWriter
         </h1>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-accent-500 select-none">
-          Premium
-        </span>
       </div>
 
       {/* Right */}
       <div className="flex items-center justify-end gap-2 w-[200px]">
-        {variant === "editor" ? (
+        {variant === "editor" && (
           <>
             <Button variant="ghost" size="sm" className="gap-1.5" onClick={onShare}>
               <Share2 className="h-3.5 w-3.5" />
@@ -84,11 +69,7 @@ export function TopAppBar({
               <span className="text-xs">{t("topbar.export")}</span>
             </Button>
           </>
-        ) : variant === "documents" ? (
-          <Button variant="default" size="sm">
-            {t("topbar.upgrade")}
-          </Button>
-        ) : null}
+        )}
 
         <Button
           variant="ghost"

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Pencil, Share2, Trash2, type LucideIcon } from "lucide-react";
+import { Pencil, Trash2, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/components/I18nProvider";
 
@@ -10,6 +10,7 @@ interface DocumentCardProps {
   categoryKey: "card.sciFi" | "card.fantasy" | "card.design" | "card.journal" | "card.planning" | "card.research";
   icon: LucideIcon;
   iconBg?: string;
+  viewMode?: "grid" | "list";
   onClick?: () => void;
   onDelete?: () => void;
 }
@@ -21,11 +22,46 @@ export function DocumentCard({
   categoryKey,
   icon: Icon,
   iconBg = "bg-brand-100 text-brand-600",
+  viewMode = "grid",
   onClick,
   onDelete,
 }: DocumentCardProps) {
   const { t } = useI18n();
 
+  // List view: horizontal layout
+  if (viewMode === "list") {
+    return (
+      <div
+        onClick={onClick}
+        className={cn(
+          "group flex items-center gap-4 rounded-lg border border-surface-200 bg-white px-4 py-3 transition-all duration-200",
+          "dark:border-surface-800 dark:bg-surface-900",
+          onClick ? "hover:bg-surface-50 active:scale-[0.99] cursor-pointer dark:hover:bg-surface-800" : ""
+        )}
+      >
+        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", iconBg)}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-semibold text-surface-900 truncate dark:text-surface-100">{title}</h4>
+          <p className="text-xs text-surface-500 truncate">{preview}</p>
+        </div>
+        <span className="text-xs text-surface-400 shrink-0">{date}</span>
+        <div className="flex items-center gap-0.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100 shrink-0">
+          <Button variant="ghost" size="icon-sm" className="h-6 w-6" title={t("card.edit")}
+            onClick={(e) => { e.stopPropagation(); onClick?.(); }}>
+            <Pencil className="h-3 w-3" />
+          </Button>
+          <Button variant="ghost" size="icon-sm" className="h-6 w-6 hover:text-red-500" title={t("card.delete")}
+            onClick={(e) => { e.stopPropagation(); onDelete?.(); }}>
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Grid view: card layout
   return (
     <div
       onClick={onClick}
@@ -35,10 +71,7 @@ export function DocumentCard({
         onClick ? "hover:shadow-md hover:border-surface-300 active:scale-[0.98] cursor-pointer" : ""
       )}
     >
-      {/* Left accent bar */}
       <div className="absolute left-0 top-4 bottom-4 w-0.5 rounded-full bg-surface-200 dark:bg-surface-700" />
-
-      {/* Header: Icon + Category */}
       <div className="flex items-center justify-between mb-4">
         <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", iconBg)}>
           <Icon className="h-4.5 w-4.5" />
@@ -47,46 +80,21 @@ export function DocumentCard({
           {t(categoryKey)}
         </span>
       </div>
-
-      {/* Title */}
       <h4 className="mb-2 text-sm font-semibold leading-tight text-surface-900 dark:text-surface-100">
         {title}
       </h4>
-
-      {/* Preview */}
       <p className="mb-4 flex-1 text-xs leading-relaxed text-surface-500 line-clamp-3">
         {preview}
       </p>
-
-      {/* Footer: Date + Actions */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-surface-400">{date}</span>
         <div className="flex items-center gap-0.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="h-6 w-6"
-            title={t("card.edit")}
-            onClick={(e) => { e.stopPropagation(); onClick?.(); }}
-          >
+          <Button variant="ghost" size="icon-sm" className="h-6 w-6" title={t("card.edit")}
+            onClick={(e) => { e.stopPropagation(); onClick?.(); }}>
             <Pencil className="h-3 w-3" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="h-6 w-6"
-            title={t("card.share")}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Share2 className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="h-6 w-6 hover:text-red-500"
-            title={t("card.delete")}
-            onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-          >
+          <Button variant="ghost" size="icon-sm" className="h-6 w-6 hover:text-red-500" title={t("card.delete")}
+            onClick={(e) => { e.stopPropagation(); onDelete?.(); }}>
             <Trash2 className="h-3 w-3" />
           </Button>
         </div>

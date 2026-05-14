@@ -10,6 +10,8 @@ const translations = {
   "nav.settings": { zh: "设置", en: "Settings" },
   "nav.darkMode": { zh: "深色模式", en: "Dark Mode" },
   "nav.lightMode": { zh: "浅色模式", en: "Light Mode" },
+  "nav.expand": { zh: "展开菜单", en: "Expand Menu" },
+  "nav.collapse": { zh: "收起菜单", en: "Collapse Menu" },
 
   // TopAppBar
   "topbar.language": { zh: "语言", en: "Language" },
@@ -58,6 +60,42 @@ const translations = {
   "editor.orderedList": { zh: "有序列表", en: "Numbered list" },
   "editor.saving": { zh: "保存中...", en: "Saving..." },
   "editor.saved": { zh: "已自动保存", en: "Auto-saved" },
+  "editor.undo": { zh: "撤销", en: "Undo" },
+  "editor.redo": { zh: "重做", en: "Redo" },
+  "editor.code": { zh: "行内代码", en: "Inline Code" },
+  "editor.codeBlock": { zh: "代码块", en: "Code Block" },
+  "editor.highlight": { zh: "高亮", en: "Highlight" },
+  "editor.textColor": { zh: "文字颜色", en: "Text Color" },
+  "editor.clearColor": { zh: "清除颜色", en: "Clear" },
+  "editor.alignLeft": { zh: "左对齐", en: "Align Left" },
+  "editor.alignCenter": { zh: "居中", en: "Align Center" },
+  "editor.alignRight": { zh: "右对齐", en: "Align Right" },
+  "editor.blockquote": { zh: "引用", en: "Blockquote" },
+  "editor.horizontalRule": { zh: "分割线", en: "Horizontal Rule" },
+  "editor.fontSize": { zh: "字号", en: "Font Size" },
+  "editor.lineHeight": { zh: "行高", en: "Line Height" },
+  "editor.clearFontSize": { zh: "清除字号", en: "Clear" },
+  "editor.favorite": { zh: "收藏文档", en: "Favorite" },
+  "editor.unfavorite": { zh: "取消收藏", en: "Unfavorite" },
+  "editor.noContent": { zh: "没有可导出的内容", en: "No content to export" },
+  "editor.exported": { zh: "文档已导出", en: "Document exported" },
+
+  // Editor font sizes
+  "editor.fontSize.small": { zh: "小", en: "Small" },
+  "editor.fontSize.default": { zh: "默认", en: "Default" },
+  "editor.fontSize.medium": { zh: "中", en: "Medium" },
+  "editor.fontSize.large": { zh: "大", en: "Large" },
+  "editor.fontSize.xlarge": { zh: "特大", en: "X-Large" },
+
+  // Editor colors
+  "editor.color.default": { zh: "默认", en: "Default" },
+  "editor.color.red": { zh: "红色", en: "Red" },
+  "editor.color.orange": { zh: "橙色", en: "Orange" },
+  "editor.color.yellow": { zh: "黄色", en: "Yellow" },
+  "editor.color.green": { zh: "绿色", en: "Green" },
+  "editor.color.blue": { zh: "蓝色", en: "Blue" },
+  "editor.color.purple": { zh: "紫色", en: "Purple" },
+  "editor.color.magenta": { zh: "紫红", en: "Magenta" },
 
   // Share Modal
   "share.title": { zh: "分享与导出", en: "Share & Export" },
@@ -116,7 +154,7 @@ const translations = {
   "settings.premium": { zh: "Premium 会员", en: "Premium Member" },
   "settings.active": { zh: "已激活", en: "Active" },
 
-  // Document Card
+  // Document Card / Categories
   "card.edit": { zh: "编辑", en: "Edit" },
   "card.share": { zh: "分享", en: "Share" },
   "card.delete": { zh: "删除", en: "Delete" },
@@ -126,6 +164,10 @@ const translations = {
   "card.journal": { zh: "日记", en: "Journal" },
   "card.planning": { zh: "规划", en: "Planning" },
   "card.research": { zh: "研究", en: "Research" },
+  "card.general": { zh: "通用", en: "General" },
+  "documents.selectCategory": { zh: "选择文档类型", en: "Select Category" },
+  "documents.switchCategory": { zh: "切换类型", en: "Switch Type" },
+  "documents.clickToSwitch": { zh: "点击切换文档类型", en: "Click to switch document type" },
 
   // Favorites Page
   "favorites.empty": { zh: "暂无收藏文档", en: "No favorites yet" },
@@ -151,6 +193,33 @@ const translations = {
   "toast.favRemoved": { zh: "已取消收藏", en: "Removed from favorites" },
   "toast.movedToTrash": { zh: "已移入回收站", en: "moved to trash" },
   "toast.newDocCreated": { zh: "新文档已创建", en: "New document created" },
+  "toast.avatarSuccess": { zh: "头像上传成功", en: "Avatar uploaded" },
+  "toast.avatarFailed": { zh: "头像上传失败", en: "Avatar upload failed" },
+  "toast.avatarTooBig": { zh: "图片大小不能超过2MB", en: "Image must be under 2MB" },
+  "toast.profileFailed": { zh: "获取用户信息失败", en: "Failed to load profile" },
+  "toast.saveFailed": { zh: "保存失败", en: "Save failed" },
+  "toast.createFailed": { zh: "创建文档失败", en: "Failed to create document" },
+  "toast.deleteFailed": { zh: "删除失败", en: "Delete failed" },
+  "toast.emptyFailed": { zh: "清空失败", en: "Empty failed" },
+  "toast.restoreFailed": { zh: "恢复失败", en: "Restore failed" },
+
+  // Forgot Password
+  "forgot.title": { zh: "忘记密码", en: "Forgot Password" },
+  "forgot.resetPassword": { zh: "重置密码", en: "Reset Password" },
+  "forgot.subtitle": { zh: "输入注册邮箱获取验证码", en: "Enter your email to receive a code" },
+  "forgot.resetSubtitle": { zh: "输入验证码和新密码", en: "Enter code and new password" },
+  "forgot.emailPlaceholder": { zh: "请输入注册邮箱", en: "Enter your email" },
+  "forgot.sendCode": { zh: "获取验证码", en: "Send Code" },
+  "forgot.codePlaceholder": { zh: "请输入6位验证码", en: "Enter 6-digit code" },
+  "forgot.newPasswordPlaceholder": { zh: "请输入新密码（至少6位）", en: "New password (min 6 chars)" },
+  "forgot.resetBtn": { zh: "重置密码", en: "Reset Password" },
+  "forgot.backToLogin": { zh: "返回登录", en: "Back to Login" },
+  "forgot.successTitle": { zh: "密码重置成功", en: "Password Reset" },
+  "forgot.successMessage": { zh: "请使用新密码登录您的账户", en: "Sign in with your new password" },
+  "forgot.devNotice": { zh: "开发模式显示，生产环境将通过邮件发送", en: "Dev mode; will be emailed in production" },
+
+  // Settings
+  "settings.avatarHint": { zh: "点击相机图标上传头像", en: "Click camera icon to upload" },
 } as const;
 
 type TranslationKey = keyof typeof translations;

@@ -1,0 +1,247 @@
+import { Router, Response } from "express";
+import prisma from "../lib/prisma";
+import { AuthRequest, authMiddleware } from "../middleware/auth";
+
+const router = Router();
+
+// All routes require authentication
+router.use(authMiddleware);
+
+// GET /api/documents - List user's active documents
+router.get("/", async (req: AuthRequest, res: Response) => {
+  try {
+    const documents = await prisma.document.findMany({
+      where: {
+        userId: req.user!.userId,
+        isDeleted: false,
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    res.json({ documents });
+  } catch (error) {
+    console.error("List documents error:", error);
+    res.status(500).json({ error: "获取文档列表失败" });
+  }
+});
+
+// GET /api/documents/favorites - List user's favorite documents
+router.get("/favorites", async (req: AuthRequest, res: Response) => {
+  try {
+    const documents = await prisma.document.findMany({
+      where: {
+        userId: req.user!.userId,
+        isDeleted: false,
+        isFavorite: true,
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    res.json({ documents });
+  } catch (error) {
+    console.error("List favorites error:", error);
+    res.status(500).json({ error: "获取收藏列表失败" });
+  }
+});
+
+// GET /api/documents/trash - List user's trashed documents
+router.get("/trash", async (req: AuthRequest, res: Response) => {
+  try {
+    const documents = await prisma.document.findMany({
+      where: {
+        userId: req.user!.userId,
+        isDeleted: true,
+      },
+      orderBy: { deletedAt: "desc" },
+    });
+
+    res.json({ documents });
+  } catch (error) {
+    console.error("List trash error:", error);
+    res.status(500).json({ error: "获取回收站列表失败" });
+  }
+});
+
+// GET /api/documents/:id - Get a single document
+router.get("/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const document = await prisma.document.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!document || document.userId !== req.user!.userId) {
+      res.status(404).json({ error: "文档不存在" });
+      return;
+    }
+
+    res.json({ document });
+  } catch (error) {
+    console.error("Get document error:", error);
+    res.status(500).json({ error: "获取文档失败" });
+  }
+});
+
+// POST /api/documents - Create a new document
+router.post("/", async (req: AuthRequest, res: Response) => {
+  try {
+    const { title, content, preview, category } = req.body;
+
+    const document = await prisma.document.create({
+      data: {
+        title: title || "无标题文档",
+        content: content || "",
+        preview: preview || "",
+        category: category || "general",
+        userId: req.user!.userId,
+      },
+    });
+
+    res.status(201).json({ document });
+  } catch (error) {
+    console.error("Create document error:", error);
+    res.status(500).json({ error: "创建文档失败" });
+  }
+});
+
+// PUT /api/documents/:id - Update a document
+router.put("/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const { title, content, preview, category } = req.body;
+
+    const existing = await prisma.document.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!existing || existing.userId !== req.user!.userId) {
+      res.status(404).json({ error: "文档不存在" });
+      return;
+    }
+
+    const document = await prisma.document.update({
+      where: { id: req.params.id },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(content !== undefined && { content }),
+        ...(preview !== undefined && { preview }),
+        ...(category !== undefined && { category }),
+      },
+    });
+
+    res.json({ document });
+  } catch (error) {
+    console.error("Update document error:", error);
+    res.status(500).json({ error: "更新文档失败" });
+  }
+});
+
+// PATCH /api/documents/:id/favorite - Toggle favorite
+router.patch("/:id/favorite", async (req: AuthRequest, res: Response) => {
+  try {
+    const existing = await prisma.document.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!existing || existing.userId !== req.user!.userId) {
+      res.status(404).json({ error: "文档不存在" });
+      return;
+    }
+
+    const document = await prisma.document.update({
+      where: { id: req.params.id },
+      data: { isFavorite: !existing.isFavorite },
+    });
+
+    res.json({ document });
+  } catch (error) {
+    console.error("Toggle favorite error:", error);
+    res.status(500).json({ error: "操作失败" });
+  }
+});
+
+// PATCH /api/documents/:id/trash - Move to trash
+router.patch("/:id/trash", async (req: AuthRequest, res: Response) => {
+  try {
+    const existing = await prisma.document.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!existing || existing.userId !== req.user!.userId) {
+      res.status(404).json({ error: "文档不存在" });
+      return;
+    }
+
+    const document = await prisma.document.update({
+      where: { id: req.params.id },
+      data: { isDeleted: true, deletedAt: new Date() },
+    });
+
+    res.json({ document });
+  } catch (error) {
+    console.error("Move to trash error:", error);
+    res.status(500).json({ error: "操作失败" });
+  }
+});
+
+// PATCH /api/documents/:id/restore - Restore from trash
+router.patch("/:id/restore", async (req: AuthRequest, res: Response) => {
+  try {
+    const existing = await prisma.document.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!existing || existing.userId !== req.user!.userId) {
+      res.status(404).json({ error: "文档不存在" });
+      return;
+    }
+
+    const document = await prisma.document.update({
+      where: { id: req.params.id },
+      data: { isDeleted: false, deletedAt: null },
+    });
+
+    res.json({ document });
+  } catch (error) {
+    console.error("Restore error:", error);
+    res.status(500).json({ error: "操作失败" });
+  }
+});
+
+// DELETE /api/documents/:id - Permanently delete
+router.delete("/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const existing = await prisma.document.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!existing || existing.userId !== req.user!.userId) {
+      res.status(404).json({ error: "文档不存在" });
+      return;
+    }
+
+    await prisma.document.delete({ where: { id: req.params.id } });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Delete document error:", error);
+    res.status(500).json({ error: "删除文档失败" });
+  }
+});
+
+// DELETE /api/documents/trash/empty - Empty trash
+router.delete("/trash/empty", async (req: AuthRequest, res: Response) => {
+  try {
+    await prisma.document.deleteMany({
+      where: {
+        userId: req.user!.userId,
+        isDeleted: true,
+      },
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Empty trash error:", error);
+    res.status(500).json({ error: "清空回收站失败" });
+  }
+});
+
+export default router;

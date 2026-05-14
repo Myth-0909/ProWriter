@@ -9,6 +9,8 @@ import { SettingsPage } from "@/pages/SettingsPage";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
+import { useAuth } from "@/auth";
+import { isLoggedIn as checkLoggedIn, clearToken } from "@/api";
 import "./App.css";
 
 export type NavId = "documents" | "favorites" | "trash" | "settings";
@@ -17,11 +19,13 @@ type Page = "editor" | "documents" | "favorites" | "share" | "login" | "trash" |
 export default function App() {
   const { toast } = useToast();
   const { t } = useI18n();
-  const [currentPage, setCurrentPage] = useState<Page>("editor");
-  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem("isLoggedIn") === "true");
+  const { refreshUser } = useAuth();
+  const [currentPage, setCurrentPage] = useState<Page>("documents");
+  const [isLoggedIn, setIsLoggedIn] = useState(() => checkLoggedIn());
   const [activeNav, setActiveNav] = useState<NavId>("documents");
   const [logoutConfirm, setLogoutConfirm] = useState(false);
-  const [editorDocId, setEditorDocId] = useState("1");
+  const [editorDocId, setEditorDocId] = useState<string>("");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleNavChange = (id: NavId) => {
     setActiveNav(id);
@@ -42,16 +46,17 @@ export default function App() {
   const handleLogout = () => setLogoutConfirm(true);
 
   const confirmLogout = () => {
-    localStorage.removeItem("isLoggedIn");
+    clearToken();
     setIsLoggedIn(false);
     setCurrentPage("login");
+    setEditorDocId("");
     toast(t("toast.logoutSuccess"), "success");
   };
 
-  const handleLogin = () => {
-    localStorage.setItem("isLoggedIn", "true");
+  const handleLogin = async () => {
     setIsLoggedIn(true);
-    setCurrentPage("editor");
+    await refreshUser();
+    setCurrentPage("documents");
   };
 
   if (!isLoggedIn && currentPage !== "login") {
@@ -64,22 +69,22 @@ export default function App() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-white dark:bg-surface-950">
       {currentPage === "editor" && (
-        <EditorPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} activeDoc={editorDocId} />
+        <EditorPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} activeDoc={editorDocId} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
       )}
       {currentPage === "documents" && (
-        <DocumentCenterPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} onOpenDoc={handleOpenDoc} />
+        <DocumentCenterPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} onOpenDoc={handleOpenDoc} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
       )}
       {currentPage === "favorites" && (
-        <FavoritesPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} onOpenDoc={handleOpenDoc} />
+        <FavoritesPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} onOpenDoc={handleOpenDoc} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
       )}
       {currentPage === "share" && (
-        <SharePanelPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} />
+        <SharePanelPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
       )}
       {currentPage === "trash" && (
-        <TrashPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} />
+        <TrashPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
       )}
       {currentPage === "settings" && (
-        <SettingsPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} />
+        <SettingsPage activeNav={activeNav} onNavChange={handleNavChange} onLogout={handleLogout} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
       )}
 
       <ConfirmModal
