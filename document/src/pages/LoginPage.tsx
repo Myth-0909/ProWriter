@@ -122,7 +122,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         {/* Logo */}
         <div className="mb-8 text-center">
           <ShinyText
-            text="ProWriter"
+            text="MythWriter"
             color={isDark ? "#e2e8f0" : "#0f172a"}
             shineColor={isDark ? "#60a5fa" : "#3b82f6"}
             speed={2.5}

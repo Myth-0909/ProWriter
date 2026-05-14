@@ -1,4 +1,4 @@
-# ProWriter / 智笔
+# MythWriter / 神话作家
 
 A full-stack cross-platform writing application — your intelligent document workspace with rich text editing, category management, and cloud sync.
 
@@ -10,7 +10,7 @@ A full-stack cross-platform writing application — your intelligent document wo
 
 ## English
 
-### What ProWriter Can Do
+### What MythWriter Can Do
 
 #### Document Management
 - **Create & Edit** — Rich text editor powered by Tiptap with full formatting support
@@ -100,7 +100,7 @@ cc_figma/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/Myth-0909/ProWriter.git
+git clone https://github.com/Myth-0909/MythWriter.git
 cd cc_figma
 
 # 2. Configure MySQL
@@ -239,7 +239,7 @@ cc_figma/
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/Myth-0909/ProWriter.git
+git clone https://github.com/Myth-0909/MythWriter.git
 cd cc_figma
 
 # 2. 配置 MySQL

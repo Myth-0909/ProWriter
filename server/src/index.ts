@@ -29,6 +29,6 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`ProWriter API server running on http://localhost:${PORT}`);
+  console.log(`MythWriter API server running on http://localhost:${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
 });

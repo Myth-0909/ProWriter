@@ -247,7 +247,7 @@ export function SettingsPage({ activeNav = "settings", onNavChange, onLogout, si
                   </h3>
                 </div>
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-surface-700 dark:text-surface-300">ProWriter</span>
+                  <span className="text-sm text-surface-700 dark:text-surface-300">MythWriter</span>
                   <span className="text-sm text-surface-500">{t("settings.version")} 1.0.0</span>
                 </div>
               </section>

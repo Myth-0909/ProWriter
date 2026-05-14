@@ -40,7 +40,7 @@ export function SharePanelPage({ activeNav = "documents", onNavChange, onLogout,
     <div className="flex h-screen w-full flex-col overflow-hidden bg-white dark:bg-surface-950">
       <TopAppBar
         variant="editor"
-        title="ProWriter"
+        title="MythWriter"
         onShare={() => setShareOpen(true)}
         onLogout={onLogout}
         sidebarCollapsed={sidebarCollapsed}

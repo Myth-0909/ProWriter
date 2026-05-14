@@ -8,6 +8,7 @@ import {
   Moon,
   type LucideIcon,
 } from "lucide-react";
+import { ShinyText } from "@/components/ShinyText";
 import { useTheme } from "@/components/ThemeProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { useAuth } from "@/auth";
@@ -62,12 +63,20 @@ export function SideNavBar({ activeNav, onNavChange, collapsed = false }: SideNa
       <div className={cn("pt-6 pb-4", collapsed ? "px-3" : "px-6")}>
         {collapsed ? (
           <div className="flex justify-center">
-            <span className="text-lg font-bold text-brand-500">P</span>
+            <img src="/Logo.png" alt="MythWriter" className="h-8 w-8 rounded-md object-contain" />
           </div>
         ) : (
-          <h1 className="text-lg font-bold tracking-tight text-surface-900 dark:text-surface-100">
-            ProWriter
-          </h1>
+          <div className="flex items-center gap-2">
+            <img src="/Logo.png" alt="MythWriter" className="h-7 w-7 rounded-md object-contain" />
+            <ShinyText
+              text="MythWriter"
+              color={theme === "dark" ? "#f1f5f9" : "#0f172a"}
+              shineColor={theme === "dark" ? "#60a5fa" : "#3b82f6"}
+              speed={3}
+              direction="right"
+              className="text-lg font-bold tracking-tight"
+            />
+          </div>
         )}
       </div>
 

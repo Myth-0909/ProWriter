@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ProWriter 一键启动脚本 - 同时启动前端和后端
+# MythWriter 一键启动脚本 - 同时启动前端和后端
 
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FRONTEND_DIR="$ROOT_DIR/document"
@@ -29,7 +29,7 @@ if [ ! -d "$BACKEND_DIR" ]; then
 fi
 
 echo "==============================="
-echo "  ProWriter 一键启动"
+echo "  MythWriter 一键启动"
 echo "==============================="
 
 # 启动后端
