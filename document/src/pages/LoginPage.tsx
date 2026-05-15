@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ForgotPasswordModal } from "@/components/ForgotPasswordModal";
-import { Waves } from "@/components/Waves";
+import { Particles } from "@/components/Particles";
 import { ShinyText } from "@/components/ShinyText";
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, Globe } from "lucide-react";
@@ -92,20 +92,16 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
   return (
     <div className="relative flex h-screen w-full items-center justify-center overflow-hidden bg-surface-50 dark:bg-surface-950">
-      {/* Animated waves background */}
-      <Waves
-        lineColor={isDark ? "#334155" : "#cbd5e1"}
-        backgroundColor="transparent"
-        waveSpeedX={0.015}
-        waveSpeedY={0.006}
-        waveAmpX={40}
-        waveAmpY={20}
-        xGap={12}
-        yGap={36}
-        friction={0.93}
-        tension={0.004}
-        maxCursorMove={120}
-        className="absolute inset-0 z-0 opacity-60 dark:opacity-40"
+      {/* Particles network background */}
+      <Particles
+        particleColor={isDark ? "#60a5fa" : "#3b82f6"}
+        lineColor={isDark ? "#3b82f6" : "#2563eb"}
+        particleCount={90}
+        connectDistance={150}
+        moveSpeed={0.35}
+        mouseRadius={200}
+        mouseForce={0.35}
+        className="absolute inset-0 z-0"
       />
 
       {/* Language switch */}
