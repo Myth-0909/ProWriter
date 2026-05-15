@@ -8,7 +8,7 @@ interface DocumentStore {
   trash: Document[];
   loading: boolean;
   getDocument: (id: string) => Document | undefined;
-  createDocument: (category?: DocumentCategory) => Promise<string>;
+  createDocument: (category?: DocumentCategory, title?: string, content?: string) => Promise<string>;
   updateDocument: (id: string, updates: Partial<Pick<Document, "title" | "content" | "category">>) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
   moveToTrash: (id: string) => Promise<void>;
@@ -83,11 +83,11 @@ export function DocumentStoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const createDocument = useCallback(async (category?: DocumentCategory) => {
+  const createDocument = useCallback(async (category?: DocumentCategory, title?: string, content?: string) => {
     const { document: doc } = await api.createDocument({
-      title: "无标题文档",
-      content: "",
-      preview: "",
+      title: title || "无标题文档",
+      content: content || "",
+      preview: content ? content.slice(0, 120) : "",
       category: category || "general",
     });
     setDocuments((prev) => [doc, ...prev]);

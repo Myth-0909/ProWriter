@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DocumentCard } from "@/components/DocumentCard";
 import { Button } from "@/components/ui/button";
 import { ConfirmModal } from "@/components/ConfirmModal";
@@ -20,8 +20,11 @@ import {
   Search,
   Plus,
   ChevronDown,
+  Upload,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
+import mammoth from "mammoth";
 import { useI18n } from "@/components/I18nProvider";
 import { useDocuments } from "@/store";
 import { useToast } from "@/components/Toast";
@@ -51,6 +54,8 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
   const viewMode: "grid" | "list" = "grid";
   const [actionLoading, setActionLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [chartData, setChartData] = useState<{ days: string[]; words: number[] }>({
     days: [],
@@ -92,6 +97,45 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
     }
   };
 
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!ext || !["txt", "md", "docx"].includes(ext)) {
+      toast(t("toast.importUnsupported"), "error");
+      return;
+    }
+
+    setImporting(true);
+    try {
+      let content = "";
+      let title = file.name.replace(/\.[^.]+$/, "");
+
+      if (ext === "docx") {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        content = result.value;
+      } else {
+        content = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+      }
+
+      const newId = await createDocument("general", title, content);
+      toast(t("toast.importSuccess"), "success");
+      onOpenDoc?.(newId);
+    } catch (error: any) {
+      toast(error.message || t("toast.importFailed"), "error");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const mainDocs = documents.filter((d) => !d.isFavorite);
   const favDocs = favorites;
 
@@ -114,32 +158,58 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
             </h2>
             <p className="mt-2 text-sm text-surface-500">{t("documents.subtitle")}</p>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="lg" className="gap-1 group">
-                <Plus className="h-3.5 w-3.5" />
-                <span>{t("documents.newDocument")}</span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-60 transition-transform duration-300 group-data-[state=open]:rotate-180" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[220px]">
-              <DropdownMenuLabel>{t("documents.selectCategory")}</DropdownMenuLabel>
-              {(
-                Object.entries(categoryLabels) as [DocumentCategory, { zh: string; en: string }][]
-              ).map(([cat, label], idx) => {
-                const Icon = iconByCategory[cat];
-                const colorClass = colorByCategory[cat];
-                return (
-                  <DropdownMenuItem key={cat} index={idx} onClick={() => handleNewDocument(cat)}>
-                    <div className={`flex h-7 w-7 items-center justify-center rounded-md dropdown-item-icon ${colorClass.split(" ")[0]}`}>
-                      <Icon className={`h-3.5 w-3.5 ${colorClass.split(" ")[1]}`} />
-                    </div>
-                    <span>{label.zh}</span>
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2">
+            {/* Import button */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.md,.docx"
+              className="hidden"
+              onChange={handleImport}
+            />
+            <Button
+              variant="outline"
+              size="lg"
+              className="gap-1.5"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+            >
+              {importing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5" />
+              )}
+              <span>{t("documents.import")}</span>
+            </Button>
+
+            {/* New document button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="lg" className="gap-1 group">
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{t("documents.newDocument")}</span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-60 transition-transform duration-300 group-data-[state=open]:rotate-180" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[220px]">
+                <DropdownMenuLabel>{t("documents.selectCategory")}</DropdownMenuLabel>
+                {(
+                  Object.entries(categoryLabels) as [DocumentCategory, { zh: string; en: string }][]
+                ).map(([cat, label], idx) => {
+                  const Icon = iconByCategory[cat];
+                  const colorClass = colorByCategory[cat];
+                  return (
+                    <DropdownMenuItem key={cat} index={idx} onClick={() => handleNewDocument(cat)}>
+                      <div className={`flex h-7 w-7 items-center justify-center rounded-md dropdown-item-icon ${colorClass.split(" ")[0]}`}>
+                        <Icon className={`h-3.5 w-3.5 ${colorClass.split(" ")[1]}`} />
+                      </div>
+                      <span>{label.zh}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {favDocs.length > 0 && (
