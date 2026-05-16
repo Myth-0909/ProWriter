@@ -58,8 +58,8 @@ body.dark {
   background-color: #020617;
 }
 
-/* ==================== OverlayScrollbars Theme ==================== */
-[data-overlayscrollbars-theme="os-theme-mythwriter"] {
+/* ==================== OverlayScrollbars Themes ==================== */
+[data-overlayscrollbars-theme="os-theme-mythwriter-light"] {
   --os-handle-bg: #93c5fd;
   --os-handle-bg-hover: #60a5fa;
   --os-handle-bg-active: #3b82f6;
@@ -70,14 +70,19 @@ body.dark {
   --os-track-bg: transparent;
   --os-track-bg-hover: transparent;
   --os-track-bg-active: transparent;
-  --os-transition-duration: 0.2s;
 }
 
-html.dark [data-overlayscrollbars-theme="os-theme-mythwriter"] {
+[data-overlayscrollbars-theme="os-theme-mythwriter-dark"] {
   --os-handle-bg: #60a5fa;
   --os-handle-bg-hover: #93c5fd;
   --os-handle-bg-active: #bfdbfe;
+  --os-handle-border-radius: 9999px;
+  --os-handle-interactive-area-offset: 4;
   --os-size: 10px;
+  --os-padding-perpendicular: 2px;
+  --os-track-bg: transparent;
+  --os-track-bg-hover: transparent;
+  --os-track-bg-active: transparent;
 }
 
 /* Global native scrollbar fallback for non-OS areas */

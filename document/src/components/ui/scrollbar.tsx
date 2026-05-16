@@ -3,27 +3,28 @@ import type { OverlayScrollbarsComponentProps } from "overlayscrollbars-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/ThemeProvider";
 
-const sharedOptions: OverlayScrollbarsComponentProps["options"] = {
-  scrollbars: {
-    theme: "os-theme-mythwriter",
-    autoHide: "leave",
-    autoHideDelay: 800,
-    visibility: "auto",
-    dragScroll: true,
-    clickScroll: true,
-  },
-};
-
 interface ScrollbarProps extends OverlayScrollbarsComponentProps {
   className?: string;
 }
 
 export function Scrollbar({ className, children, options, ...props }: ScrollbarProps) {
   const { theme } = useTheme();
+  const themeName = theme === "dark" ? "os-theme-mythwriter-dark" : "os-theme-mythwriter-light";
+
+  const mergedOptions: OverlayScrollbarsComponentProps["options"] = {
+    scrollbars: {
+      theme: themeName,
+      autoHide: "leave",
+      autoHideDelay: 800,
+      dragScroll: true,
+      clickScroll: true,
+    },
+    ...options,
+  };
+
   return (
     <OverlayScrollbarsComponent
-      key={theme}
-      options={{ ...sharedOptions, ...options }}
+      options={mergedOptions}
       className={cn("os-host-flex", className)}
       {...props}
     >
