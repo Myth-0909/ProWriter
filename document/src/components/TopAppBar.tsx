@@ -15,6 +15,7 @@ import {
   Languages,
   Sun,
   Moon,
+  Monitor,
   Settings,
   ChevronDown,
 } from "lucide-react";
@@ -93,6 +94,29 @@ export function TopAppBar({
           </>
         )}
 
+        {/* Theme toggle button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="h-8 w-8 text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100"
+          title={
+            themeMode === "system"
+              ? t("nav.followSystem")
+              : theme === "light"
+                ? t("nav.darkMode")
+                : t("nav.lightMode")
+          }
+        >
+          {themeMode === "system" ? (
+            <Monitor className="h-4 w-4" />
+          ) : theme === "light" ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+        </Button>
+
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -142,22 +166,6 @@ export function TopAppBar({
                 <DropdownMenuSeparator />
               </>
             )}
-
-            {/* Theme toggle */}
-            <DropdownMenuItem onClick={toggleTheme}>
-              {theme === "light" ? (
-                <Moon className="h-4 w-4" />
-              ) : (
-                <Sun className="h-4 w-4" />
-              )}
-              <span>
-                {themeMode === "system"
-                  ? t("nav.followSystem")
-                  : theme === "light"
-                    ? t("nav.darkMode")
-                    : t("nav.lightMode")}
-              </span>
-            </DropdownMenuItem>
 
             {/* Language switch */}
             <DropdownMenuItem onClick={toggleLang}>
