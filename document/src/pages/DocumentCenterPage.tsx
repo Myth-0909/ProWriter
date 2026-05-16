@@ -229,6 +229,7 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
                   iconBg={colorByCategory[doc.category]}
                   viewMode={viewMode}
                   onClick={() => onOpenDoc?.(doc.id)}
+                  onDelete={() => setDeleteTarget(doc.id)}
                 />
               ))}
             </div>

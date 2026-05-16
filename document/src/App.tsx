@@ -145,23 +145,21 @@ export default function App() {
           <SideNavBar activeNav={activeNav} onNavChange={handleNavChange} collapsed={sidebarCollapsed} />
 
           <PageTransition pageKey={currentPage}>
-            <div className="flex flex-1 overflow-hidden">
-              {currentPage === "editor" && (
-                <EditorPageContent activeDocId={editorDocId} setActiveDocId={setEditorDocId} />
-              )}
-              {currentPage === "documents" && (
-                <DocumentCenterPage onOpenDoc={handleOpenDoc} />
-              )}
-              {currentPage === "favorites" && (
-                <FavoritesPage onOpenDoc={handleOpenDoc} />
-              )}
-              {currentPage === "trash" && (
-                <TrashPage />
-              )}
-              {currentPage === "settings" && (
-                <SettingsPage />
-              )}
-            </div>
+            {currentPage === "editor" && (
+              <EditorPageContent activeDocId={editorDocId} setActiveDocId={setEditorDocId} />
+            )}
+            {currentPage === "documents" && (
+              <DocumentCenterPage onOpenDoc={handleOpenDoc} />
+            )}
+            {currentPage === "favorites" && (
+              <FavoritesPage onOpenDoc={handleOpenDoc} />
+            )}
+            {currentPage === "trash" && (
+              <TrashPage />
+            )}
+            {currentPage === "settings" && (
+              <SettingsPage />
+            )}
           </PageTransition>
         </div>
       </div>

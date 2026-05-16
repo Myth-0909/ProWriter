@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { DocumentCard } from "@/components/DocumentCard";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { useDocuments } from "@/store";
 import { useI18n } from "@/components/I18nProvider";
+import { useToast } from "@/components/Toast";
 import {
   BookOpen, FileText, Palette, Lightbulb, Target, Search, Star,
   type LucideIcon,
@@ -25,7 +28,19 @@ interface FavoritesPageProps {
 
 export function FavoritesPage({ onOpenDoc }: FavoritesPageProps) {
   const { t } = useI18n();
-  const { favorites } = useDocuments();
+  const { toast } = useToast();
+  const { favorites, moveToTrash } = useDocuments();
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    try {
+      const doc = favorites.find((d) => d.id === id);
+      await moveToTrash(id);
+      toast(`"${doc?.title}" ${t("toast.movedToTrash")}`, "info");
+    } catch (error: any) {
+      toast(error.message || t("toast.deleteFailed"), "error");
+    }
+  };
 
   return (
     <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950">
@@ -54,6 +69,7 @@ export function FavoritesPage({ onOpenDoc }: FavoritesPageProps) {
                 icon={iconByCategory[doc.category]}
                 iconBg={colorByCategory[doc.category]}
                 onClick={() => onOpenDoc?.(doc.id)}
+                onDelete={() => setDeleteTarget(doc.id)}
               />
             ))}
           </div>
@@ -67,6 +83,20 @@ export function FavoritesPage({ onOpenDoc }: FavoritesPageProps) {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={t("confirm.deleteTitle")}
+        description={t("confirm.deleteDesc")}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
+        variant="danger"
+        onConfirm={() => {
+          if (deleteTarget) handleDelete(deleteTarget);
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }

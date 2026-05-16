@@ -19,8 +19,10 @@ export function PageTransition({ children, pageKey }: PageTransitionProps) {
   return (
     <div
       key={animKey}
-      className="h-full w-full"
       style={{
+        flex: 1,
+        display: "flex",
+        overflow: "hidden",
         animation: "pageEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards",
       }}
     >
