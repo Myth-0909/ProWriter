@@ -7,14 +7,14 @@ import { useDocuments } from "@/store";
 import { useAuth } from "@/auth";
 import { api } from "@/api";
 
-type Personality = "enthusiastic" | "cute" | "cool" | "professional" | "humorous";
+type Personality = "normal" | "cute" | "catgirl" | "serious" | "silly";
 
 const PERSONALITY_OPTIONS: { key: Personality; label: string; emoji: string }[] = [
-  { key: "enthusiastic", label: "热情", emoji: "🔥" },
-  { key: "cute", label: "可爱", emoji: "🐱" },
-  { key: "cool", label: "冷酷", emoji: "😎" },
-  { key: "professional", label: "专业", emoji: "💼" },
-  { key: "humorous", label: "幽默", emoji: "😄" },
+  { key: "normal", label: "正常", emoji: "✨" },
+  { key: "cute", label: "可爱", emoji: "🌸" },
+  { key: "catgirl", label: "猫娘", emoji: "🐱" },
+  { key: "serious", label: "严肃", emoji: "📋" },
+  { key: "silly", label: "搞怪", emoji: "🤪" },
 ];
 
 const MEMORY_KEY = "mythwriter_ai_memory";
@@ -23,17 +23,6 @@ const MAX_MEMORY_MESSAGES = 20;
 interface Message {
   role: "user" | "assistant";
   content: string;
-}
-
-interface AIAction {
-  type: "create_document";
-  title: string;
-  content: string;
-}
-
-interface ChatResponse {
-  reply: string;
-  action: AIAction | null;
 }
 
 // Long-term memory helpers
@@ -47,7 +36,6 @@ function loadMemory(): Message[] {
 }
 
 function saveMemory(messages: Message[]) {
-  // Keep only the last N messages, summarize older ones
   const recent = messages.slice(-MAX_MEMORY_MESSAGES);
   localStorage.setItem(MEMORY_KEY, JSON.stringify(recent));
 }
@@ -70,11 +58,11 @@ export function AIChatWidget() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [personality, setPersonality] = useState<Personality>(() => {
-    return (localStorage.getItem("mythwriter_ai_personality") as Personality) || "enthusiastic";
+    return (localStorage.getItem("mythwriter_ai_personality") as Personality) || "normal";
   });
   const [personalityOpen, setPersonalityOpen] = useState(false);
-  const [greeting, setGreeting] = useState("");
   const memoryRef = useRef<Message[]>(loadMemory());
+  const greetedRef = useRef(false);
 
   // Drag state
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -88,15 +76,24 @@ export function AIChatWidget() {
     setPosition({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
   }, []);
 
-  // Load greeting when opening chat
+  // Send proactive greeting as real message when opening chat
   useEffect(() => {
-    if (open && messages.length === 0) {
+    if (open && !greetedRef.current) {
+      greetedRef.current = true;
       api.aiGreeting({
         userName: user?.name || "",
         personality,
-      }).then((res) => setGreeting(res.greeting)).catch(() => {
-        setGreeting("您好！我是麦斯助手，请问有什么可以帮您的？");
+      }).then((res) => {
+        setMessages([{ role: "assistant", content: res.greeting }]);
+        memoryRef.current = [{ role: "assistant", content: res.greeting }];
+        saveMemory(memoryRef.current);
+      }).catch(() => {
+        setMessages([{ role: "assistant", content: "您好！我是麦斯助手，请问有什么可以帮您的？" }]);
       });
+    }
+    if (!open) {
+      greetedRef.current = false;
+      setMessages([]);
     }
   }, [open, personality, user?.name]);
 
@@ -141,20 +138,9 @@ export function AIChatWidget() {
     };
   }, [dragging, position]);
 
-  // Accept greeting as first assistant message
-  const acceptGreeting = useCallback(() => {
-    if (greeting) {
-      setMessages([{ role: "assistant", content: greeting }]);
-      setGreeting("");
-    }
-  }, [greeting]);
-
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || loading) return;
-
-    // Accept greeting if still showing
-    acceptGreeting();
 
     const userMsg: Message = { role: "user", content: text };
     const updatedMessages = [...messages, userMsg];
@@ -162,7 +148,6 @@ export function AIChatWidget() {
     setInput("");
     setLoading(true);
 
-    // Save to long-term memory
     const memory = [...memoryRef.current, userMsg];
     memoryRef.current = memory;
 
@@ -172,16 +157,14 @@ export function AIChatWidget() {
         messages: updatedMessages,
         personality,
         memoryContext,
-      }) as ChatResponse;
+      });
 
       const assistantMsg: Message = { role: "assistant", content: res.reply };
       setMessages((prev) => [...prev, assistantMsg]);
-
-      // Save to long-term memory
       memoryRef.current = [...memory, assistantMsg];
       saveMemory(memoryRef.current);
 
-      if (res.action?.type === "create_document") {
+      if (res.action?.type === "create_document" && res.action.content) {
         const { title, content } = res.action;
         try {
           await createDocument("general", title, content);
@@ -191,12 +174,14 @@ export function AIChatWidget() {
         }
       }
     } catch (error: any) {
-      const errMsg: Message = { role: "assistant", content: error.message || "AI service unavailable" };
-      setMessages((prev) => [...prev, errMsg]);
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: error.message || "AI service unavailable",
+      }]);
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages, personality, createDocument, toast, acceptGreeting]);
+  }, [input, loading, messages, personality, createDocument, toast]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -238,7 +223,7 @@ export function AIChatWidget() {
                   <p className="text-[10px] text-surface-500">DeepSeek · {currentPersonality.label}模式</p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => { setOpen(false); setGreeting(""); }} className="h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="h-8 w-8">
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -286,21 +271,8 @@ export function AIChatWidget() {
                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950">
                   <Sparkles className="h-6 w-6 text-brand-500" />
                 </div>
-                {greeting ? (
-                  <div className="w-full">
-                    <p className="text-sm leading-relaxed text-surface-700 dark:text-surface-300 whitespace-pre-wrap">
-                      {greeting}
-                    </p>
-                    <p className="mt-3 text-xs text-surface-400">
-                      输入消息开始对话，或选择上方性格切换我的风格
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-sm font-medium text-surface-700 dark:text-surface-300">你好，我是麦斯助手</p>
-                    <p className="mt-1 text-xs text-surface-500">我可以帮你写作、编辑、头脑风暴。试试说「帮我写一篇...」</p>
-                  </>
-                )}
+                <p className="text-sm font-medium text-surface-700 dark:text-surface-300">你好，我是麦斯助手</p>
+                <p className="mt-1 text-xs text-surface-500">我可以帮你写作、编辑、头脑风暴。试试说「帮我写一篇...」</p>
               </div>
             ) : (
               <>
@@ -336,13 +308,13 @@ export function AIChatWidget() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={greeting && messages.length === 0 ? "回复麦斯助手..." : "输入消息..."}
+                placeholder="输入消息..."
                 disabled={loading}
                 className="flex-1 rounded-xl border border-surface-200 bg-surface-50 px-4 py-2 text-sm text-surface-900 outline-none transition-colors focus:border-brand-300 focus:ring-1 focus:ring-brand-300 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100 dark:focus:border-brand-700"
               />
               <Button
                 size="icon"
-                onClick={messages.length === 0 && greeting ? acceptGreeting : handleSend}
+                onClick={handleSend}
                 disabled={loading || !input.trim()}
                 className="h-9 w-9 shrink-0 rounded-xl"
               >

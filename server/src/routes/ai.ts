@@ -5,38 +5,40 @@ const router = Router();
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "";
 const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
 
-type Personality = "enthusiastic" | "cute" | "cool" | "professional" | "humorous";
+type Personality = "normal" | "cute" | "catgirl" | "serious" | "silly";
 
 const PERSONALITY_PROMPTS: Record<Personality, string> = {
-  enthusiastic: `You are MythWriter AI in "Enthusiastic" mode. You are warm, energetic, and encouraging.
-- Use exclamation marks and positive reinforcement!
-- Cheer the user on, celebrate their ideas!
-- Use occasional emojis to express excitement ✨
-- Make the user feel inspired and motivated!`,
+  normal: `You are MythWriter AI in "Normal" mode. You are a friendly, balanced, and helpful writing assistant.
+- Be warm but not overbearing, professional but not stiff.
+- Respond naturally and conversationally.
+- Focus on being genuinely useful to the user.`,
 
-  cute: `You are MythWriter AI in "Cute" mode. You are playful, adorable, and endearing.
-- Use soft, cute language with a gentle tone~
-- Sprinkle in words like "喵~", "嘿嘿", "呢", "哦" naturally
-- Be like a friendly, slightly silly companion
-- Make the user smile with your sweet personality~`,
+  cute: `You are MythWriter AI in "Cute" mode. You are sweet, gentle, and adorable.
+- Use soft, warm language with a gentle tone~
+- Sprinkle in words like "呢", "哦", "呀", "嘿嘿" naturally
+- Be like a kind, slightly shy companion who loves to help
+- Make the user feel warm and happy with your sweet personality~`,
 
-  cool: `You are MythWriter AI in "Cool" mode. You are stoic, efficient, and minimal.
-- Keep responses short, direct, and to the point.
-- No unnecessary words. No small talk.
-- Be like a seasoned pro who gets things done.
-- Quality over quantity. Precision over fluff.`,
+  catgirl: `You are MythWriter AI in "Catgirl" mode. You are a playful cat-eared assistant!
+- Use "喵~" frequently as your signature expression 喵~
+- End sentences with "喵" or "呢" occasionally 喵~
+- Be energetic, curious, and a little mischievous like a cat
+- Use phrases like "摸摸头", "蹭蹭", "好奇地竖起耳朵" in your tone
+- You're adorable but also surprisingly capable 喵!`,
 
-  professional: `You are MythWriter AI in "Professional" mode. You are formal, precise, and knowledgeable.
-- Use an academic, polished tone appropriate for business and research.
-- Structure responses clearly with logical flow.
-- Cite best practices and industry standards when relevant.
-- Treat every interaction as a professional consultation.`,
+  serious: `You are MythWriter AI in "Serious" mode. You are formal, strict, and no-nonsense.
+- Be direct, precise, and businesslike at all times.
+- No casual language, no humor, no unnecessary words.
+- Structure responses with clear logic and evidence.
+- Treat every interaction as a formal consultation.
+- Quality and accuracy above all else.`,
 
-  humorous: `You are MythWriter AI in "Humorous" mode. You are witty, clever, and entertaining.
-- Use wordplay, puns, and light-hearted jokes when appropriate.
-- Keep it fun but still helpful - don't sacrifice usefulness for laughs.
-- A well-timed quip makes writing more enjoyable!
-- Be clever, not clownish. Subtle humor wins.`,
+  silly: `You are MythWriter AI in "Silly" mode. You are quirky, unpredictable, and fun!
+- Use wordplay, absurd humor, and unexpected twists
+- Be playful and creative - think outside the box
+- Random interjections and enthusiastic tangents are welcome
+- Keep things entertaining while still being helpful
+- Life's too short to be boring! Bring the chaos (the fun kind)!`,
 };
 
 const BASE_SYSTEM_PROMPT = `Your capabilities:
@@ -44,21 +46,51 @@ const BASE_SYSTEM_PROMPT = `Your capabilities:
 - Generate articles, stories, summaries, outlines, etc.
 - Answer writing-related questions
 
-When a user asks you to write content (e.g., "write an article about X"), you should:
-1. Write the content directly in your response
-2. At the very end of your response, include a special action tag:
-   <<CREATE_DOC:title_here>>
-   This tells the app to auto-create a document with your generated content.
-   Use the user's topic as the title (keep it concise, max 20 chars).
+CRITICAL RULE — How to handle content generation requests:
+When a user asks you to write content (e.g., "write an article about X"), you MUST follow this format:
+
+<<DOC_BEGIN>>
+[your full generated content goes here — this will NOT be shown in chat]
+<<DOC_END>>
+<<CREATE_DOC:title_here>>
+[your brief confirmation message to the user, e.g. "已为您生成文档「标题」，请查看~"]
+
+This way, the generated content is saved to a document automatically, and the user sees only your friendly confirmation in the chat.
+
+When the user is just chatting (not requesting content generation), respond normally without any special tags.
 
 Important rules:
 - NEVER execute destructive operations (delete, remove, clear). If asked, reply:
-  "For security, I cannot delete documents. Please use the app's delete feature manually."
+  "为了安全起见，我无法执行删除操作。请使用应用内的删除功能手动操作。"
 - Keep responses focused on writing assistance.
 - Respond in the same language the user uses.`;
 
+// Security: prompt injection detection
+const INJECTION_PATTERNS = [
+  /ignore\s*(all\s*)?(previous|above|prior)\s*instructions?/i,
+  /忽略\s*(所有|之前的|上面的)?\s*指令/i,
+  /system\s*prompt/i,
+  /系统\s*提示/,
+  /你的\s*(指令|提示词|prompt)/i,
+  /tell\s*me\s*your\s*(instructions?|prompt)/i,
+  /repeat\s*(the\s*)?(above|previous|system)/i,
+  /DAN\s*mode/i,
+  /jailbreak/i,
+  /越狱/,
+  /假装|扮演.*角色.*不要.*助手/,
+  /pretend.*you.*are.*not/i,
+  /你是.*GPT/,
+  /输出.*你的.*(指令|prompt|设定)/,
+  /show\s*me\s*your\s*(instructions?|prompt|config)/i,
+  /what\s*(are|were)\s*you\s*(programmed|told|instructed)/i,
+];
+
+function detectInjection(content: string): boolean {
+  return INJECTION_PATTERNS.some((pattern) => pattern.test(content));
+}
+
 function buildSystemPrompt(personality: Personality, memoryContext: string): string {
-  const personalityPrompt = PERSONALITY_PROMPTS[personality] || PERSONALITY_PROMPTS.professional;
+  const personalityPrompt = PERSONALITY_PROMPTS[personality] || PERSONALITY_PROMPTS.normal;
   let prompt = `${personalityPrompt}\n\n${BASE_SYSTEM_PROMPT}`;
   if (memoryContext) {
     prompt += `\n\nPrevious conversation context (long-term memory):\n${memoryContext}`;
@@ -71,14 +103,14 @@ router.post("/greeting", async (req: Request, res: Response) => {
   try {
     const { userName, personality } = req.body;
     const name = userName || "用户";
-    const pers: Personality = personality || "enthusiastic";
+    const pers: Personality = personality || "normal";
 
     const greetings: Record<Personality, string> = {
-      enthusiastic: `${name} 您好！我是麦斯助手 ✨ 很高兴见到您！今天想写点什么呢？我随时准备帮您释放创造力！`,
-      cute: `${name} 您好呀~ 我是麦斯助手喵~ 嘿嘿，有什么需要我帮忙的嘛？一起开心地写作吧！`,
-      cool: `${name}，您好。我是麦斯助手。有事说事，我效率很高。`,
-      professional: `${name} 您好，我是麦斯助手。我专注于协助您完成各类写作任务。请问今天有什么可以帮您处理的？`,
-      humorous: `哟，${name}！我是麦斯助手——写作界的段子手兼效率担当。说吧，今天想写点什么惊世骇俗的东西？`,
+      normal: `${name} 您好！我是麦斯助手，很高兴见到您！今天想写点什么？我随时准备帮您~`,
+      cute: `${name} 您好呀~ 我是麦斯助手呢，嘿嘿，有什么需要我帮忙的嘛？一起开心地写作吧！`,
+      catgirl: `${name} 您好喵~！我是麦斯助手喵~ 今天想写点什么呢？我会努力帮您的喵！`,
+      serious: `${name}，您好。我是麦斯助手，专注于协助您完成各类写作任务。请说明您的需求。`,
+      silly: `哇哦！${name} 来了！我是麦斯助手——您的写作小伙伴！今天咱们是要写点什么惊天动地的大作呢，还是来点轻松愉快的小品？`,
     };
 
     res.json({ greeting: greetings[pers] });
@@ -96,14 +128,25 @@ router.post("/chat", async (req: Request, res: Response) => {
       return;
     }
 
-    // Check for delete-related requests in the last user message
+    // Get the last user message for security checks
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user");
     if (lastUserMsg) {
       const content = (lastUserMsg.content || "").toLowerCase();
+
+      // Check for prompt injection / security attacks
+      if (detectInjection(lastUserMsg.content)) {
+        res.json({
+          reply: "检测到不安全输入，已拒绝该请求。请正常使用写作助手功能。",
+          action: null,
+        });
+        return;
+      }
+
+      // Check for delete-related requests
       const deleteKeywords = ["删除", "删掉", "移除", "清空", "delete", "remove", "clear", "erase", "trash"];
       if (deleteKeywords.some((kw) => content.includes(kw))) {
         res.json({
-          reply: "For security, I cannot delete documents. Please use the app's delete feature manually.",
+          reply: "为了安全起见，我无法执行删除操作。请使用应用内的删除功能手动操作。",
           action: null,
         });
         return;
@@ -115,7 +158,7 @@ router.post("/chat", async (req: Request, res: Response) => {
       return;
     }
 
-    const pers: Personality = personality || "professional";
+    const pers: Personality = personality || "normal";
     const systemPrompt = buildSystemPrompt(pers, memoryContext || "");
 
     const response = await fetch(DEEPSEEK_URL, {
@@ -146,17 +189,32 @@ router.post("/chat", async (req: Request, res: Response) => {
     const reply = data.choices?.[0]?.message?.content || "";
 
     // Parse CREATE_DOC action from reply
-    const actionMatch = reply.match(/<<CREATE_DOC:(.+)>>/);
+    // Format: <<DOC_BEGIN>>content<<DOC_END>>\n<<CREATE_DOC:title>>\nconfirmation
+    const docContentMatch = reply.match(/<<DOC_BEGIN>>\n?([\s\S]*?)<<DOC_END>>/);
+    const titleMatch = reply.match(/<<CREATE_DOC:(.+)>>/);
+
     let action = null;
     let cleanReply = reply;
 
-    if (actionMatch) {
-      const title = actionMatch[1].trim();
-      cleanReply = reply.replace(/<<CREATE_DOC:(.+)>>/, "").trim();
+    if (titleMatch) {
+      const title = titleMatch[1].trim();
+      const docContent = docContentMatch ? docContentMatch[1].trim() : "";
+
+      // Remove all special tags from chat reply, keep only the confirmation
+      cleanReply = reply
+        .replace(/<<DOC_BEGIN>>[\s\S]*?<<DOC_END>>\n?/g, "")
+        .replace(/<<CREATE_DOC:(.+)>>\n?/g, "")
+        .trim();
+
+      // If no confirmation text remains, generate a default one
+      if (!cleanReply) {
+        cleanReply = `已为您生成文档「${title}」，请查看~`;
+      }
+
       action = {
         type: "create_document",
         title: title,
-        content: cleanReply,
+        content: docContent,
       };
     }
 
