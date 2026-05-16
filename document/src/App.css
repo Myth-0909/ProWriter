@@ -60,9 +60,9 @@ body.dark {
 
 /* ==================== OverlayScrollbars Theme ==================== */
 .os-theme-mythwriter {
-  --os-handle-bg: #cbd5e1;
-  --os-handle-bg-hover: #94a3b8;
-  --os-handle-bg-active: #94a3b8;
+  --os-handle-bg: #93c5fd;
+  --os-handle-bg-hover: #60a5fa;
+  --os-handle-bg-active: #3b82f6;
   --os-handle-border-radius: 9999px;
   --os-handle-interactive-area-offset: 4;
   --os-size: 8px;
@@ -75,9 +75,9 @@ body.dark {
 
 .dark .os-theme-mythwriter,
 .os-theme-mythwriter.dark {
-  --os-handle-bg: #475569;
-  --os-handle-bg-hover: #64748b;
-  --os-handle-bg-active: #64748b;
+  --os-handle-bg: #3b82f6;
+  --os-handle-bg-hover: #60a5fa;
+  --os-handle-bg-active: #93c5fd;
 }
 
 /* Global native scrollbar fallback for non-OS areas */
@@ -91,20 +91,20 @@ body.dark {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #93c5fd;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #60a5fa;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #3b82f6;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #60a5fa;
 }
 
 ::-webkit-scrollbar-corner {
@@ -114,11 +114,11 @@ body.dark {
 /* Firefox fallback */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: #93c5fd transparent;
 }
 
 .dark * {
-  scrollbar-color: #475569 transparent;
+  scrollbar-color: #3b82f6 transparent;
 }
 
 /* OverlayScrollbars: make host fill flex containers */
