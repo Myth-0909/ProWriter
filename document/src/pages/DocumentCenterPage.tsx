@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import mammoth from "mammoth";
+import { marked } from "marked";
 import { useI18n } from "@/components/I18nProvider";
 import { useDocuments } from "@/store";
 import { useToast } from "@/components/Toast";
@@ -110,19 +111,31 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
     setImporting(true);
     try {
       let content = "";
-      let title = file.name.replace(/\.[^.]+$/, "");
+      const title = file.name.replace(/\.[^.]+$/, "");
 
       if (ext === "docx") {
+        // Use convertToHtml to preserve formatting (bold, italic, headings, etc.)
         const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.extractRawText({ arrayBuffer });
+        const result = await mammoth.convertToHtml({ arrayBuffer });
         content = result.value;
       } else {
-        content = await new Promise<string>((resolve, reject) => {
+        const raw = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
           reader.onerror = reject;
           reader.readAsText(file);
         });
+
+        if (ext === "md") {
+          // Convert markdown to HTML
+          content = await marked.parse(raw);
+        } else {
+          // TXT: convert plain text with line breaks to HTML paragraphs
+          content = raw
+            .split(/\n\n+/)
+            .map((p) => `<p>${p.replace(/\n/g, "<br>").trim() || "&#8203;"}</p>`)
+            .join("");
+        }
       }
 
       const newId = await createDocument("general", title, content);
