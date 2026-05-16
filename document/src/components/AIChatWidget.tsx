@@ -124,6 +124,7 @@ export function AIChatWidget() {
   const [personality, setPersonality] = useState<Personality>(() =>
     safePersonality(localStorage.getItem(PERSONALITY_KEY))
   );
+  const personalityRef = useRef(personality);
   const [personalityOpen, setPersonalityOpen] = useState(false);
   const memoryRef = useRef<Message[]>(loadMemory());
   const abortRef = useRef<AbortController | null>(null);
@@ -160,7 +161,7 @@ export function AIChatWidget() {
       setMessages([]);
       return;
     }
-    api.aiGreeting({ userName: user?.name || "", personality })
+    api.aiGreeting({ userName: user?.name || "", personality: personalityRef.current })
       .then((res) => {
         setMessages([{ role: "assistant", content: res.greeting }]);
         memoryRef.current = [{ role: "assistant", content: res.greeting }];
@@ -175,6 +176,11 @@ export function AIChatWidget() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streaming]);
+
+  // Sync ref with state
+  useEffect(() => {
+    personalityRef.current = personality;
+  }, [personality]);
 
   // Persist personality
   const changePersonality = useCallback((p: Personality) => {
@@ -233,7 +239,7 @@ export function AIChatWidget() {
     try {
       const memoryContext = buildMemoryContext(memory);
       const { reply, action } = await streamChat(
-        { messages: updatedMessages, personality, memoryContext },
+        { messages: updatedMessages, personality: personalityRef.current, memoryContext },
         (delta) => {
           streamContentRef.current += delta;
           setMessages((prev) => {
