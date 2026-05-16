@@ -78,18 +78,53 @@ export default function App() {
     setCurrentPage("documents");
   };
 
-  const handleExport = () => {
+  const handleExport = (format: string) => {
     const doc = getDocument(editorDocId);
     if (!doc) {
       toast(t("editor.noContent"), "error");
       return;
     }
 
-    const html = `<!DOCTYPE html>
+    const title = doc.title || "document";
+    const dateStr = new Date(doc.updatedAt).toLocaleDateString("zh-CN");
+    let content: string;
+    let mime: string;
+    let ext: string;
+
+    if (format === "txt") {
+      // Strip HTML tags
+      const tmp = document.createElement("div");
+      tmp.innerHTML = doc.content;
+      content = `# ${title}\n${dateStr} · ${doc.category}\n\n${tmp.textContent || ""}`;
+      mime = "text/plain;charset=utf-8";
+      ext = "txt";
+    } else if (format === "md") {
+      // Simple HTML-to-Markdown (headings, paragraphs, bold, italic)
+      let md = doc.content
+        .replace(/<h1[^>]*>(.*?)<\/h1>/gi, "# $1\n\n")
+        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, "## $1\n\n")
+        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, "### $1\n\n")
+        .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+        .replace(/<p[^>]*>/gi, "")
+        .replace(/<\/p>/gi, "\n\n")
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<strong[^>]*>(.*?)<\/strong>/gi, "**$1**")
+        .replace(/<b[^>]*>(.*?)<\/b>/gi, "**$1**")
+        .replace(/<em[^>]*>(.*?)<\/em>/gi, "*$1*")
+        .replace(/<i[^>]*>(.*?)<\/i>/gi, "*$1*")
+        .replace(/<code[^>]*>(.*?)<\/code>/gi, "`$1`")
+        .replace(/<pre[^>]*>(.*?)<\/pre>/gi, "```\n$1\n```\n")
+        .replace(/<[^>]+>/g, "");
+      content = `# ${title}\n${dateStr} · ${doc.category}\n\n${md.trim()}`;
+      mime = "text/markdown;charset=utf-8";
+      ext = "md";
+    } else {
+      // HTML (default)
+      content = `<!DOCTYPE html>
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>${doc.title}</title>
+  <title>${title}</title>
   <style>
     body { max-width: 720px; margin: 40px auto; padding: 0 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.8; color: #333; }
     h1 { font-size: 28px; margin-bottom: 8px; }
@@ -97,17 +132,20 @@ export default function App() {
   </style>
 </head>
 <body>
-  <h1>${doc.title}</h1>
-  <div class="meta">${new Date(doc.updatedAt).toLocaleDateString("zh-CN")} · ${doc.category}</div>
+  <h1>${title}</h1>
+  <div class="meta">${dateStr} · ${doc.category}</div>
   ${doc.content}
 </body>
 </html>`;
+      mime = "text/html;charset=utf-8";
+      ext = "html";
+    }
 
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${doc.title || "document"}.html`;
+    a.download = `${title}.${ext}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

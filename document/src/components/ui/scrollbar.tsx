@@ -1,6 +1,5 @@
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import type { OverlayScrollbarsComponentProps } from "overlayscrollbars-react";
-import "overlayscrollbars/overlayscrollbars.css";
 import { cn } from "@/lib/utils";
 
 const sharedOptions: OverlayScrollbarsComponentProps["options"] = {

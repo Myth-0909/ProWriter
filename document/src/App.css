@@ -59,7 +59,7 @@ body.dark {
 }
 
 /* ==================== OverlayScrollbars Theme ==================== */
-.os-theme-mythwriter {
+[data-overlayscrollbars-theme="os-theme-mythwriter"] {
   --os-handle-bg: #93c5fd;
   --os-handle-bg-hover: #60a5fa;
   --os-handle-bg-active: #3b82f6;
@@ -73,8 +73,7 @@ body.dark {
   --os-transition-duration: 0.2s;
 }
 
-.dark .os-theme-mythwriter,
-.os-theme-mythwriter.dark {
+.dark [data-overlayscrollbars-theme="os-theme-mythwriter"] {
   --os-handle-bg: #3b82f6;
   --os-handle-bg-hover: #60a5fa;
   --os-handle-bg-active: #93c5fd;

@@ -27,7 +27,7 @@ interface TopAppBarProps {
   variant?: "editor" | "documents" | "trash" | "settings";
   title?: string;
   onShare?: () => void;
-  onExport?: () => void;
+  onExport?: (format: string) => void;
   onLogout?: () => void;
   onSettings?: () => void;
   sidebarCollapsed?: boolean;
@@ -87,10 +87,28 @@ export function TopAppBar({
               <Share2 className="h-3.5 w-3.5" />
               <span className="text-xs">{t("topbar.share")}</span>
             </Button>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-surface-600 hover:text-surface-900 dark:text-surface-300 dark:hover:text-surface-100" onClick={onExport}>
-              <Download className="h-3.5 w-3.5" />
-              <span className="text-xs">{t("topbar.export")}</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-surface-600 hover:text-surface-900 dark:text-surface-300 dark:hover:text-surface-100">
+                  <Download className="h-3.5 w-3.5" />
+                  <span className="text-xs">{t("topbar.export")}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[160px]">
+                <DropdownMenuItem onClick={() => onExport?.("html")}>
+                  <span>HTML</span>
+                  <span className="ml-auto text-[10px] text-surface-400">.html</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport?.("txt")}>
+                  <span>TXT</span>
+                  <span className="ml-auto text-[10px] text-surface-400">.txt</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onExport?.("md")}>
+                  <span>Markdown</span>
+                  <span className="ml-auto text-[10px] text-surface-400">.md</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         )}
 

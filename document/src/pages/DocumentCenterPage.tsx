@@ -59,7 +59,15 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedQuery(value), 200);
+  };
 
   const [chartData, setChartData] = useState<{ days: string[]; words: number[] }>({
     days: [],
@@ -164,11 +172,11 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
     return qi === q.length;
   };
 
-  const filteredDocs = searchQuery
-    ? documents.filter((d) => fuzzyMatch(d.title, searchQuery) || fuzzyMatch(d.preview || "", searchQuery))
+  const filteredDocs = debouncedQuery
+    ? documents.filter((d) => fuzzyMatch(d.title, debouncedQuery) || fuzzyMatch(d.preview || "", debouncedQuery))
     : documents;
   const mainDocs = filteredDocs.filter((d) => !d.isFavorite);
-  const favDocs = favorites.filter((d) => !searchQuery || fuzzyMatch(d.title, searchQuery) || fuzzyMatch(d.preview || "", searchQuery));
+  const favDocs = favorites.filter((d) => !debouncedQuery || fuzzyMatch(d.title, debouncedQuery) || fuzzyMatch(d.preview || "", debouncedQuery));
 
   const getCategoryKey = (cat: DocumentCategory) => {
     const map: Record<DocumentCategory, "card.sciFi" | "card.fantasy" | "card.design" | "card.journal" | "card.planning" | "card.research"> = {
@@ -197,7 +205,7 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
                 type="text"
                 placeholder={t("documents.search")}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full rounded-lg border border-surface-200 bg-white py-2 pl-9 pr-3 text-sm text-surface-900 placeholder:text-surface-400 transition-colors focus:outline-none focus:ring-2 focus:ring-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100"
               />
               {searchQuery && (
