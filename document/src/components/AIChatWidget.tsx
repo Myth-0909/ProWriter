@@ -149,8 +149,10 @@ export function AIChatWidget() {
   const [feedbackMsgIdx, setFeedbackMsgIdx] = useState<number | null>(null);
   const [showRating, setShowRating] = useState(false);
   const [showDislikeOpts, setShowDislikeOpts] = useState(false);
+  const [hoverStar, setHoverStar] = useState(0);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const feedbackDoneRef = useRef<Set<number>>(new Set());
 
   // Save conversation to DB
   const saveConversation = useCallback(async () => {
@@ -477,18 +479,30 @@ export function AIChatWidget() {
                           <span className="inline-block w-1.5 h-4 ml-0.5 bg-brand-500 animate-pulse rounded-sm align-middle" />
                         )}
                       </div>
-                      {/* Feedback buttons for assistant messages */}
-                      {!isUser && !streaming && msg.content && (
+                      {/* Feedback buttons */}
+                      {!isUser && !streaming && msg.content && !feedbackDoneRef.current.has(i) && (
                         <div className="flex items-center gap-1 mt-1 ml-1">
                           <button
-                            onClick={() => { setFeedbackMsgIdx(i); setShowRating(true); setShowDislikeOpts(false); }}
+                            onClick={() => {
+                              if (showRating && feedbackMsgIdx === i) {
+                                setShowRating(false); setFeedbackMsgIdx(null);
+                              } else {
+                                setFeedbackMsgIdx(i); setShowRating(true); setShowDislikeOpts(false);
+                              }
+                            }}
                             className="p-0.5 rounded text-surface-300 hover:text-amber-500 hover:bg-surface-100 transition-colors"
                             title={t("ai.like")}
                           >
                             <ThumbsUp className="h-3 w-3" />
                           </button>
                           <button
-                            onClick={() => { setFeedbackMsgIdx(i); setShowDislikeOpts(true); setShowRating(false); }}
+                            onClick={() => {
+                              if (showDislikeOpts && feedbackMsgIdx === i) {
+                                setShowDislikeOpts(false); setFeedbackMsgIdx(null);
+                              } else {
+                                setFeedbackMsgIdx(i); setShowDislikeOpts(true); setShowRating(false);
+                              }
+                            }}
                             className="p-0.5 rounded text-surface-300 hover:text-red-500 hover:bg-surface-100 transition-colors"
                             title={t("ai.dislike")}
                           >
@@ -496,34 +510,42 @@ export function AIChatWidget() {
                           </button>
                           {/* Star rating popover */}
                           {showRating && feedbackMsgIdx === i && (
-                            <div className="flex items-center gap-0.5 bg-white border border-surface-200 rounded-lg px-1.5 py-1 shadow-sm dark:bg-surface-800 dark:border-surface-700">
+                            <div className="flex items-center gap-0.5 bg-white border border-surface-200 rounded-lg px-1.5 py-1 shadow-sm dark:bg-surface-800 dark:border-surface-700 animate-in fade-in slide-in-from-bottom-1 duration-200">
                               {[1, 2, 3, 4, 5].map((star) => (
                                 <button
                                   key={star}
                                   onClick={async () => {
                                     await api.sendFeedback({ messageContent: msg.content, feedbackType: "like", rating: star });
                                     toast(t("ai.feedbackThanks"), "success");
+                                    feedbackDoneRef.current.add(i);
                                     setShowRating(false); setFeedbackMsgIdx(null);
                                   }}
-                                  className="p-0.5 transition-colors hover:text-amber-500"
+                                  onMouseEnter={() => setHoverStar(star)}
+                                  onMouseLeave={() => setHoverStar(0)}
+                                  className="p-0.5 transition-transform hover:scale-125"
                                 >
-                                  <Star className="h-3.5 w-3.5 text-amber-400" fill="currentColor" />
+                                  <Star
+                                    className="h-3.5 w-3.5 transition-colors"
+                                    fill={hoverStar >= star ? "currentColor" : "none"}
+                                    color={hoverStar >= star ? "#f59e0b" : "#d1d5db"}
+                                  />
                                 </button>
                               ))}
                             </div>
                           )}
                           {/* Dislike options popover */}
                           {showDislikeOpts && feedbackMsgIdx === i && (
-                            <div className="flex flex-wrap gap-1 bg-white border border-surface-200 rounded-lg px-2 py-1.5 shadow-sm dark:bg-surface-800 dark:border-surface-700">
+                            <div className="flex flex-col gap-0.5 bg-white border border-surface-200 rounded-lg px-2 py-1.5 shadow-sm dark:bg-surface-800 dark:border-surface-700 animate-in fade-in slide-in-from-bottom-1 duration-200">
                               {[t("ai.dislikeInaccurate"), t("ai.dislikeUnexpected"), t("ai.dislikeIncomplete"), t("ai.dislikeTone"), t("ai.dislikeOther")].map((reason) => (
                                 <button
                                   key={reason}
                                   onClick={async () => {
                                     await api.sendFeedback({ messageContent: msg.content, feedbackType: "dislike", reason });
                                     toast(t("ai.feedbackThanks"), "success");
+                                    feedbackDoneRef.current.add(i);
                                     setShowDislikeOpts(false); setFeedbackMsgIdx(null);
                                   }}
-                                  className="text-[10px] px-2 py-0.5 rounded-full border border-surface-200 text-surface-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors dark:border-surface-700 dark:hover:bg-red-950"
+                                  className="text-[10px] px-2 py-0.5 rounded-full border border-surface-200 text-surface-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors dark:border-surface-700 dark:hover:bg-red-950 whitespace-nowrap"
                                 >
                                   {reason}
                                 </button>
@@ -541,13 +563,18 @@ export function AIChatWidget() {
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900 mt-0.5">
                       <Bot className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
                     </div>
-                    <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-surface-100 px-4 py-3 dark:bg-surface-800">
-                      <span className="flex gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-surface-100 px-4 py-3 dark:bg-surface-800">
+                      <span className="text-xs text-surface-500">
+                        {t("ai.thinking").split("").map((char, ci) => (
+                          <span
+                            key={ci}
+                            className="inline-block animate-bounce"
+                            style={{ animationDelay: `${ci * 80}ms`, animationDuration: "0.6s" }}
+                          >
+                            {char === " " ? "\u00A0" : char}
+                          </span>
+                        ))}
                       </span>
-                      <span className="text-xs text-surface-500">{t("ai.thinking")}</span>
                     </div>
                   </div>
                 )}
