@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DocumentCard } from "@/components/DocumentCard";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { Scrollbar } from "@/components/ui/scrollbar";
 import { useDocuments } from "@/store";
 import { useI18n } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
@@ -43,7 +44,7 @@ export function FavoritesPage({ onOpenDoc }: FavoritesPageProps) {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950">
+    <Scrollbar className="flex-1 bg-surface-50 dark:bg-surface-950">
       <div className="mx-auto max-w-[1200px] px-20 py-20">
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-3">
@@ -97,6 +98,6 @@ export function FavoritesPage({ onOpenDoc }: FavoritesPageProps) {
           setDeleteTarget(null);
         }}
       />
-    </div>
+    </Scrollbar>
   );
 }

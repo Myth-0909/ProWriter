@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { Scrollbar } from "@/components/ui/scrollbar";
 import { LoadingOverlay } from "@/components/LoadingSpinner";
 import { useDocuments } from "@/store";
 import { useI18n } from "@/components/I18nProvider";
@@ -52,7 +53,7 @@ export function TrashPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950 relative">
+    <Scrollbar className="flex-1 bg-surface-50 dark:bg-surface-950 relative">
       {(loading || actionLoading) && <LoadingOverlay />}
       <div className="mx-auto max-w-[960px] px-20 py-20">
         <div className="mb-8 flex items-start justify-between">
@@ -148,6 +149,6 @@ export function TrashPage() {
         variant="danger"
         onConfirm={handleEmptyTrash}
       />
-    </div>
+    </Scrollbar>
   );
 }

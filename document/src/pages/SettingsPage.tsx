@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Scrollbar } from "@/components/ui/scrollbar";
 import { useTheme } from "@/components/ThemeProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
@@ -81,7 +82,7 @@ export function SettingsPage() {
     : null;
 
   return (
-    <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950">
+    <Scrollbar className="flex-1 bg-surface-50 dark:bg-surface-950">
       <div className="mx-auto max-w-[720px] px-20 py-20">
         <h2 className="text-[28px] font-bold leading-tight text-surface-900 dark:text-surface-100 mb-8">
           {t("settings.title")}
@@ -244,6 +245,6 @@ export function SettingsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </Scrollbar>
   );
 }

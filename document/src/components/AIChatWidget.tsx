@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Bot, X, Send, Sparkles, Smile, ChevronDown, ThumbsUp, ThumbsDown, Star, Trash2, Check, Pencil } from "lucide-react";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { Scrollbar } from "@/components/ui/scrollbar";
 import { useI18n } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { useDocuments } from "@/store";
@@ -482,7 +483,7 @@ export function AIChatWidget() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4">
+          <Scrollbar className="flex-1 px-4 py-4" options={{ scrollbars: { autoHide: "leave" } }}>
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center px-4">
                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950">
@@ -655,7 +656,7 @@ export function AIChatWidget() {
               </>
             )}
             <div ref={chatEndRef} />
-          </div>
+          </Scrollbar>
 
           {/* Delete selected bar */}
           {editMode && selectedMsgs.size > 0 && (

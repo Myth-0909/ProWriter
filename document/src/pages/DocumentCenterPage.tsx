@@ -3,6 +3,7 @@ import { DocumentCard } from "@/components/DocumentCard";
 import { Button } from "@/components/ui/button";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { LoadingOverlay } from "@/components/LoadingSpinner";
+import { Scrollbar } from "@/components/ui/scrollbar";
 import { WriterFlowChart } from "@/components/WriterFlowChart";
 import {
   DropdownMenu,
@@ -178,7 +179,7 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950 relative">
+    <Scrollbar className="flex-1 bg-surface-50 dark:bg-surface-950" options={{ scrollbars: { autoHide: "scroll" } }}>
       {(loading || actionLoading) && <LoadingOverlay />}
       <div className="mx-auto max-w-[1200px] px-20 py-20">
         <div className="mb-10 flex items-start justify-between">
@@ -330,6 +331,6 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
           setDeleteTarget(null);
         }}
       />
-    </div>
+    </Scrollbar>
   );
 }
