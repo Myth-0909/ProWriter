@@ -3,6 +3,13 @@
 ## Always
 
 - **i18n required**: Every user-facing string must use the `t()` function from `useI18n()`. Add new keys to `document/src/components/I18nProvider.tsx` under the appropriate section. Never hardcode Chinese or English strings in the UI.
+- **Full-stack verification**: Every feature must verify the complete chain end-to-end:
+  1. Prisma schema → `npx prisma db push`
+  2. Backend route → compile check with `npx tsc --noEmit`
+  3. Frontend API client → method added to `api.ts`
+  4. Frontend component → uses the API method
+  5. i18n keys added for all user-facing strings
+  Never ship a feature without verifying all 5 layers are connected.
 - **Commit after each session**: When the conversation ends and there are uncommitted changes, always commit with a descriptive message and push to `origin/master`.
 
 ## Tech Stack
