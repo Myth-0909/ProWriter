@@ -139,11 +139,11 @@ router.post("/greeting", async (req: Request, res: Response) => {
     const pers = safePersonality(personality);
 
     const greetings: Record<Personality, string> = {
-      normal: `${name} 您好！我是麦斯助手，很高兴见到您！今天想写点什么？我随时准备帮您~`,
-      cute: `${name} 您好呀~ 我是麦斯助手呢 💕 嘿嘿，有什么需要我帮忙的嘛？一起开心地写作吧！🌸✨`,
-      catgirl: `${name} 您好喵~！我是麦斯助手喵~ 今天想写点什么呢？我会努力帮您的喵！`,
-      serious: `${name}，您好。我是麦斯助手，专注于协助您完成各类写作任务。请说明您的需求。`,
-      silly: `哇哦！${name} 来了！我是麦斯助手——您的写作小伙伴！今天咱们是要写点什么惊天动地的大作呢，还是来点轻松愉快的小品？`,
+      normal: `${name} 您好！我是小麦，很高兴见到您！今天想写点什么？我随时准备帮您~`,
+      cute: `${name} 您好呀~ 我是小麦呢 💕 嘿嘿，有什么需要我帮忙的嘛？一起开心地写作吧！🌸✨`,
+      catgirl: `${name} 您好喵~！我是小麦喵~ 今天想写点什么呢？我会努力帮您的喵！`,
+      serious: `${name}，您好。我是小麦，专注于协助您完成各类写作任务。请说明您的需求。`,
+      silly: `哇哦！${name} 来了！我是小麦——您的写作小伙伴！今天咱们是要写点什么惊天动地的大作呢，还是来点轻松愉快的小品？`,
     };
 
     res.json({ greeting: greetings[pers] });

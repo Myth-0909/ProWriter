@@ -161,14 +161,23 @@ export function AIChatWidget() {
       setMessages([]);
       return;
     }
-    api.aiGreeting({ userName: user?.name || "", personality: personalityRef.current })
+    const pers = personalityRef.current;
+    api.aiGreeting({ userName: user?.name || "", personality: pers })
       .then((res) => {
         setMessages([{ role: "assistant", content: res.greeting }]);
         memoryRef.current = [{ role: "assistant", content: res.greeting }];
         saveMemory(memoryRef.current);
       })
       .catch(() => {
-        setMessages([{ role: "assistant", content: "您好！我是麦斯助手，请问有什么可以帮您的？" }]);
+        // Fallback greetings by personality
+        const fallbacks: Record<Personality, string> = {
+          normal: `${user?.name || '用户'} 您好！我是小麦，很高兴见到您！`,
+          cute: `${user?.name || '用户'} 您好呀~ 我是小麦呢 💕 一起开心地写作吧！🌸✨`,
+          catgirl: `${user?.name || '用户'} 您好喵~！我是小麦喵~ 今天想写点什么呢？`,
+          serious: `${user?.name || '用户'}，您好。我是小麦，请说明您的需求。`,
+          silly: `哇哦！${user?.name || '用户'} 来了！我是小麦——您的写作小伙伴！`,
+        };
+        setMessages([{ role: "assistant", content: fallbacks[pers] || fallbacks.normal }]);
       });
   }, [open, personality]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -177,13 +186,9 @@ export function AIChatWidget() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streaming]);
 
-  // Sync ref with state
-  useEffect(() => {
-    personalityRef.current = personality;
-  }, [personality]);
-
-  // Persist personality
+  // Persist personality — sync ref immediately (before re-render effects)
   const changePersonality = useCallback((p: Personality) => {
+    personalityRef.current = p;
     setPersonality(p);
     setPersonalityOpen(false);
     localStorage.setItem(PERSONALITY_KEY, p);
@@ -223,13 +228,13 @@ export function AIChatWidget() {
     setMessages(updatedMessages);
     setInput("");
     setLoading(true);
-    setStreaming(true);
+    // Don't set streaming yet — thinking indicator shows until first delta
     streamContentRef.current = "";
 
     const memory = [...memoryRef.current, userMsg];
     memoryRef.current = memory;
 
-    // Add a placeholder assistant message for streaming
+    // Add a placeholder for the assistant response
     const placeholderIdx = updatedMessages.length;
     setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
@@ -238,9 +243,14 @@ export function AIChatWidget() {
 
     try {
       const memoryContext = buildMemoryContext(memory);
+      let firstDelta = true;
       const { reply, action } = await streamChat(
         { messages: updatedMessages, personality: personalityRef.current, memoryContext },
         (delta) => {
+          if (firstDelta) {
+            firstDelta = false;
+            setStreaming(true); // Switch from thinking to streaming
+          }
           streamContentRef.current += delta;
           setMessages((prev) => {
             const next = [...prev];
@@ -323,7 +333,7 @@ export function AIChatWidget() {
                     <Bot className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100">麦斯助手</h3>
+                    <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100">小麦</h3>
                     <p className="text-[10px] text-surface-500">DeepSeek · {currentPersonality.label}模式</p>
                   </div>
                 </div>
@@ -375,7 +385,7 @@ export function AIChatWidget() {
                   <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950">
                     <Sparkles className="h-6 w-6 text-brand-500" />
                   </div>
-                  <p className="text-sm font-medium text-surface-700 dark:text-surface-300">你好，我是麦斯助手</p>
+                  <p className="text-sm font-medium text-surface-700 dark:text-surface-300">你好，我是小麦</p>
                   <p className="mt-1 text-xs text-surface-500">我可以帮你写作、编辑、头脑风暴。试试说「帮我写一篇...」</p>
                 </div>
               ) : (
@@ -395,6 +405,18 @@ export function AIChatWidget() {
                       </div>
                     </div>
                   ))}
+                  {loading && !streaming && (
+                    <div className="mb-3 flex justify-start">
+                      <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-surface-100 px-4 py-3 dark:bg-surface-800">
+                        <span className="flex gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce [animation-delay:0ms]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce [animation-delay:150ms]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce [animation-delay:300ms]" />
+                        </span>
+                        <span className="text-xs text-surface-500">小麦正在思考...</span>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
               <div ref={chatEndRef} />
