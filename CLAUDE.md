@@ -1,0 +1,69 @@
+# MythWriter - Project Guidelines
+
+## Always
+
+- **i18n required**: Every user-facing string must use the `t()` function from `useI18n()`. Add new keys to `document/src/components/I18nProvider.tsx` under the appropriate section. Never hardcode Chinese or English strings in the UI.
+- **Commit after each session**: When the conversation ends and there are uncommitted changes, always commit with a descriptive message and push to `origin/master`.
+
+## Tech Stack
+
+- **Frontend**: React 19, TypeScript, Vite 7, Tailwind CSS 4, Radix UI, Lucide Icons, Tiptap
+- **Backend**: Node.js, Express, TypeScript, Prisma, MySQL
+- **AI**: DeepSeek Chat API (streaming SSE)
+- **Desktop**: Tauri v2 (Rust)
+- **Package Manager**: pnpm (frontend), npm (server)
+
+## Project Structure
+
+```
+cc_figma/
+├── document/        # Frontend (React + Tauri)
+│   └── src/
+│       ├── components/
+│       │   └── ui/  # Radix UI wrappers
+│       ├── pages/
+│       ├── api.ts   # API client
+│       ├── auth.tsx  # Auth context
+│       ├── store.tsx # Document state
+│       └── types.ts  # TypeScript types
+├── server/          # Backend (Express + Prisma)
+│   └── src/
+│       ├── routes/
+│       ├── middleware/
+│       └── lib/
+└── start.sh         # Launch script (port 3000 + 1420)
+```
+
+## Commands
+
+- Frontend dev: `cd document && pnpm dev`
+- Frontend build: `cd document && npx vite build`
+- Frontend type check: `cd document && npx tsc --noEmit`
+- Server dev: `cd server && npm run dev`
+- Server type check: `cd server && npx tsc --noEmit`
+- Prisma push: `cd server && npx prisma db push`
+- Start all: `./start.sh`
+
+## Key Patterns
+
+- **Theme**: `useTheme()` from `ThemeProvider` — `theme === "dark"` for conditional styling
+- **Auth**: `useAuth()` from `auth.tsx` — provides `user` object with `name`, `email`, `avatar`
+- **Documents**: `useDocuments()` from `store.tsx` — CRUD operations on documents
+- **Toast**: `useToast()` for notifications — `toast(message, "success" | "error" | "info")`
+- **Styling**: Tailwind CSS 4 with custom theme colors (brand, surface, accent). Use `cn()` from `@/lib/utils` for conditional classes.
+- **API calls**: Use `api` object from `api.ts` — handles auth token injection automatically
+- **Streaming API**: For SSE endpoints (like `/api/ai/chat`), use raw `fetch` instead of the `api` helper
+
+## AI Chat Architecture
+
+- Backend proxies to DeepSeek API with SSE streaming (`stream: true`)
+- System prompt built dynamically from personality + memory context
+- Security: prompt injection detection + delete keyword blocking
+- Personalities: `normal`, `cute`, `catgirl`, `serious`, `silly`
+- Memory: localStorage for short-term, MySQL for long-term (Conversation model)
+- Feedback: ChatFeedback model with like/dislike + star ratings
+
+## Environment
+
+- `server/.env`: `DATABASE_URL`, `JWT_SECRET`, `PORT`, `DEEPSEEK_API_KEY`
+- `.env` is git-ignored — never commit it

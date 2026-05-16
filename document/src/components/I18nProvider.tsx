@@ -224,6 +224,32 @@ const translations = {
 
   // Settings
   "settings.avatarHint": { zh: "点击相机图标上传头像", en: "Click camera icon to upload" },
+
+  // AI Chat
+  "ai.title": { zh: "小麦", en: "XiaoMai" },
+  "ai.subtitle": { zh: "DeepSeek", en: "DeepSeek" },
+  "ai.greeting": { zh: "你好，我是小麦", en: "Hi, I'm XiaoMai" },
+  "ai.greetingDesc": { zh: "我可以帮你写作、编辑、头脑风暴。试试说「帮我写一篇...」", en: "I can help you write, edit, and brainstorm. Try saying 'Write an article about...'" },
+  "ai.placeholder": { zh: "输入消息...", en: "Type a message..." },
+  "ai.replying": { zh: "小麦正在回复中...", en: "XiaoMai is replying..." },
+  "ai.thinking": { zh: "小麦正在思考...", en: "XiaoMai is thinking..." },
+  "ai.clearHistory": { zh: "清除历史记录", en: "Clear History" },
+  "ai.clearConfirmTitle": { zh: "清除历史记录", en: "Clear History" },
+  "ai.clearConfirmDesc": { zh: "确定要清除所有对话记录吗？此操作不可撤销。", en: "Are you sure you want to clear all conversations? This cannot be undone." },
+  "ai.clearConfirmBtn": { zh: "确定清除", en: "Clear All" },
+  "ai.cleared": { zh: "历史记录已清除", en: "History cleared" },
+  "ai.clearFailed": { zh: "清除失败", en: "Clear failed" },
+  "ai.like": { zh: "点赞", en: "Like" },
+  "ai.dislike": { zh: "点踩", en: "Dislike" },
+  "ai.feedbackThanks": { zh: "感谢反馈！", en: "Thanks for feedback!" },
+  "ai.docCreated": { zh: "已创建文档", en: "Document created" },
+  "ai.docCreateFailed": { zh: "文档创建失败", en: "Document creation failed" },
+  "ai.dislikeInaccurate": { zh: "回复不准确", en: "Inaccurate" },
+  "ai.dislikeUnexpected": { zh: "不符合预期", en: "Not as expected" },
+  "ai.dislikeIncomplete": { zh: "内容不完整", en: "Incomplete" },
+  "ai.dislikeTone": { zh: "语气不当", en: "Wrong tone" },
+  "ai.dislikeOther": { zh: "其他", en: "Other" },
+  "ai.serviceUnavailable": { zh: "AI 服务不可用", en: "AI service unavailable" },
 } as const;
 
 type TranslationKey = keyof typeof translations;

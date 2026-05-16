@@ -299,7 +299,7 @@ router.get("/conversations", async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const conversations = await prisma.conversation.findMany({
-      where: { userId: authReq.userId },
+      where: { userId: authReq.user!.userId },
       orderBy: { updatedAt: "desc" },
       take: 10,
     });
@@ -325,7 +325,7 @@ router.post("/conversations", async (req: Request, res: Response) => {
 
     const conversation = await prisma.conversation.create({
       data: {
-        userId: authReq.userId,
+        userId: authReq.user!.userId,
         messages: messages,
         personality: personality || "normal",
       },
@@ -342,7 +342,7 @@ router.delete("/conversations", async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     await prisma.conversation.deleteMany({
-      where: { userId: authReq.userId },
+      where: { userId: authReq.user!.userId },
     });
     res.json({ success: true });
   } catch (error) {
@@ -361,7 +361,7 @@ router.post("/feedback", async (req: Request, res: Response) => {
     }
     const feedback = await prisma.chatFeedback.create({
       data: {
-        userId: authReq.userId,
+        userId: authReq.user!.userId,
         messageContent,
         feedbackType,
         rating: feedbackType === "like" ? rating || null : null,
