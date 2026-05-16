@@ -82,7 +82,7 @@ export function SettingsPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950">
-      <div className="mx-auto max-w-[720px] px-20 py-20">
+      <div className="mx-auto max-w-[720px] px-4 sm:px-8 lg:px-20 py-8 sm:py-12 lg:py-20">
         <h2 className="text-[28px] font-bold leading-tight text-surface-900 dark:text-surface-100 mb-8">
           {t("settings.title")}
         </h2>

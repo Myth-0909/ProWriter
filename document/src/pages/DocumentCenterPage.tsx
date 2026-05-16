@@ -150,10 +150,10 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
   return (
     <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950 relative">
       {(loading || actionLoading) && <LoadingOverlay />}
-      <div className="mx-auto max-w-[1200px] px-20 py-20">
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-8 lg:px-20 py-8 sm:py-12 lg:py-20">
         <div className="mb-10 flex items-start justify-between">
           <div>
-            <h2 className="text-[32px] font-bold leading-tight text-surface-900 dark:text-surface-100">
+            <h2 className="text-2xl sm:text-3xl lg:text-[32px] font-bold leading-tight text-surface-900 dark:text-surface-100">
               {t("documents.myDocuments")}
             </h2>
             <p className="mt-2 text-sm text-surface-500">{t("documents.subtitle")}</p>
@@ -217,7 +217,7 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
             <h3 className="text-sm font-semibold text-surface-500 uppercase tracking-wider mb-3">
               {t("nav.favorites")} ({favDocs.length})
             </h3>
-            <div className={viewMode === "grid" ? "grid grid-cols-4 gap-4" : "flex flex-col gap-2"}>
+            <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "flex flex-col gap-2"}>
               {favDocs.map((doc) => (
                 <DocumentCard
                   key={doc.id}
@@ -236,7 +236,7 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
           </div>
         )}
 
-        <div className={viewMode === "grid" ? "grid grid-cols-4 gap-4" : "flex flex-col gap-2"}>
+        <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "flex flex-col gap-2"}>
           {mainDocs.map((doc) => (
             <DocumentCard
               key={doc.id}

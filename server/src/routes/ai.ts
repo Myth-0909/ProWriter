@@ -75,7 +75,6 @@ Important rules:
 - Keep responses focused on writing assistance.
 - Respond in the same language the user uses.`;
 
-// Security: prompt injection detection
 const INJECTION_PATTERNS = [
   /ignore\s*(all\s*)?(previous|above|prior)\s*instructions?/i,
   /忽略\s*(所有|之前的|上面的)?\s*指令/i,
@@ -108,7 +107,31 @@ function buildSystemPrompt(personality: Personality, memoryContext: string): str
   return prompt;
 }
 
-// Greeting endpoint
+function parseAction(reply: string): { reply: string; action: any } {
+  const docContentMatch = reply.match(/<<DOC_BEGIN>>\n?([\s\S]*?)<<DOC_END>>/);
+  const titleMatch = reply.match(/<<CREATE_DOC:(.+)>>/);
+
+  if (!titleMatch) return { reply, action: null };
+
+  const title = titleMatch[1].trim();
+  const docContent = docContentMatch ? docContentMatch[1].trim() : "";
+
+  let cleanReply = reply
+    .replace(/<<DOC_BEGIN>>[\s\S]*?<<DOC_END>>\n?/g, "")
+    .replace(/<<CREATE_DOC:(.+)>>\n?/g, "")
+    .trim();
+
+  if (!cleanReply) {
+    cleanReply = `已为您生成文档「${title}」，请查看~`;
+  }
+
+  return {
+    reply: cleanReply,
+    action: docContent ? { type: "create_document", title, content: docContent } : null,
+  };
+}
+
+// Greeting
 router.post("/greeting", async (req: Request, res: Response) => {
   try {
     const { userName, personality } = req.body;
@@ -129,6 +152,7 @@ router.post("/greeting", async (req: Request, res: Response) => {
   }
 });
 
+// Streaming chat
 router.post("/chat", async (req: Request, res: Response) => {
   try {
     const { messages, personality, memoryContext } = req.body;
@@ -138,12 +162,10 @@ router.post("/chat", async (req: Request, res: Response) => {
       return;
     }
 
-    // Get the last user message for security checks
     const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user");
     if (lastUserMsg) {
       const content = (lastUserMsg.content || "").toLowerCase();
 
-      // Check for prompt injection / security attacks
       if (detectInjection(lastUserMsg.content)) {
         res.json({
           reply: "检测到不安全输入，已拒绝该请求。请正常使用写作助手功能。",
@@ -152,7 +174,6 @@ router.post("/chat", async (req: Request, res: Response) => {
         return;
       }
 
-      // Check for delete-related requests
       const deleteKeywords = ["删除", "删掉", "移除", "清空", "delete", "remove", "clear", "erase", "trash"];
       if (deleteKeywords.some((kw) => content.includes(kw))) {
         res.json({
@@ -171,6 +192,7 @@ router.post("/chat", async (req: Request, res: Response) => {
     const pers = safePersonality(personality);
     const systemPrompt = buildSystemPrompt(pers, memoryContext || "");
 
+    // Use streaming
     const response = await fetch(DEEPSEEK_URL, {
       method: "POST",
       headers: {
@@ -185,6 +207,7 @@ router.post("/chat", async (req: Request, res: Response) => {
         ],
         temperature: 0.7,
         max_tokens: 2048,
+        stream: true,
       }),
     });
 
@@ -195,43 +218,70 @@ router.post("/chat", async (req: Request, res: Response) => {
       return;
     }
 
-    const data: any = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "";
+    // Set up SSE
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
 
-    // Parse CREATE_DOC action from reply
-    // Format: <<DOC_BEGIN>>content<<DOC_END>>\n<<CREATE_DOC:title>>\nconfirmation
-    const docContentMatch = reply.match(/<<DOC_BEGIN>>\n?([\s\S]*?)<<DOC_END>>/);
-    const titleMatch = reply.match(/<<CREATE_DOC:(.+)>>/);
-
-    let action = null;
-    let cleanReply = reply;
-
-    if (titleMatch) {
-      const title = titleMatch[1].trim();
-      const docContent = docContentMatch ? docContentMatch[1].trim() : "";
-
-      // Remove all special tags from chat reply, keep only the confirmation
-      cleanReply = reply
-        .replace(/<<DOC_BEGIN>>[\s\S]*?<<DOC_END>>\n?/g, "")
-        .replace(/<<CREATE_DOC:(.+)>>\n?/g, "")
-        .trim();
-
-      // If no confirmation text remains, generate a default one
-      if (!cleanReply) {
-        cleanReply = `已为您生成文档「${title}」，请查看~`;
-      }
-
-      action = {
-        type: "create_document",
-        title: title,
-        content: docContent,
-      };
+    const reader = response.body?.getReader();
+    if (!reader) {
+      res.write(`data: ${JSON.stringify({ error: "No response body" })}\n\n`);
+      res.end();
+      return;
     }
 
-    res.json({ reply: cleanReply, action });
+    const decoder = new TextDecoder();
+    let fullContent = "";
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith("data: ")) continue;
+
+          const data = trimmed.slice(6);
+          if (data === "[DONE]") continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullContent += delta;
+              // Send the delta to client
+              res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+            }
+          } catch {
+            // Skip malformed chunks
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Stream read error:", err);
+    }
+
+    // Parse final response for actions
+    const { reply, action } = parseAction(fullContent);
+
+    // Send final message with parsed action
+    res.write(`data: ${JSON.stringify({ done: true, reply, action })}\n\n`);
+    res.end();
   } catch (error) {
     console.error("AI route error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error" });
+    } else {
+      res.write(`data: ${JSON.stringify({ error: "Stream error" })}\n\n`);
+      res.end();
+    }
   }
 });
 

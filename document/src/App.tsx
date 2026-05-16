@@ -11,6 +11,7 @@ import { SettingsPage } from "@/pages/SettingsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { ShareModal } from "@/components/ShareModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { cn } from "@/lib/utils";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { useDocuments } from "@/store";
 import { useToast } from "@/components/Toast";
@@ -143,7 +144,11 @@ export default function App() {
         />
 
         <div className="flex flex-1 overflow-hidden">
-          <SideNavBar activeNav={activeNav} onNavChange={handleNavChange} collapsed={sidebarCollapsed} />
+          {/* Sidebar: on mobile, hidden when collapsed, overlay when expanded */}
+          {!sidebarCollapsed && <div className="fixed inset-0 z-20 bg-black/30 sm:hidden" onClick={() => setSidebarCollapsed(true)} />}
+          <div className={cn("shrink-0 z-30", sidebarCollapsed ? "hidden sm:flex" : "flex")}>
+            <SideNavBar activeNav={activeNav} onNavChange={(id) => { handleNavChange(id); setSidebarCollapsed(true); }} collapsed={sidebarCollapsed} />
+          </div>
 
           <PageTransition pageKey={currentPage}>
             {currentPage === "editor" && (

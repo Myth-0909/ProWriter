@@ -114,7 +114,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       </button>
 
       {/* Login card */}
-      <div className="relative z-10 w-full max-w-[420px] rounded-2xl border border-surface-200/80 bg-white/85 backdrop-blur-xl p-8 shadow-xl dark:border-surface-700/80 dark:bg-surface-900/85">
+      <div className="relative z-10 w-full max-w-[420px] mx-4 sm:mx-0 rounded-2xl border border-surface-200/80 bg-white/85 backdrop-blur-xl p-6 sm:p-8 shadow-xl dark:border-surface-700/80 dark:bg-surface-900/85">
         {/* Logo */}
         <div className="mb-8 text-center">
           <ShinyText
