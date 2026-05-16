@@ -27,15 +27,19 @@ TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 function Tooltip({
   children,
   content,
+  side = "top",
+  delay = 200,
 }: {
   children: React.ReactNode;
   content: React.ReactNode;
+  side?: "top" | "right" | "bottom" | "left";
+  delay?: number;
 }) {
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={delay}>
       <TooltipRoot>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent>{content}</TooltipContent>
+        <TooltipContent side={side} sideOffset={8}>{content}</TooltipContent>
       </TooltipRoot>
     </TooltipProvider>
   );

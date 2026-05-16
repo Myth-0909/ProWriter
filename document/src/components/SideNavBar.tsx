@@ -61,7 +61,7 @@ function NavButton({ item, isActive, collapsed, onClick }: {
 
   if (collapsed) {
     return (
-      <Tooltip content={<span>{label}</span>}>
+      <Tooltip content={<span>{label}</span>} side="right" delay={150}>
         {button}
       </Tooltip>
     );
