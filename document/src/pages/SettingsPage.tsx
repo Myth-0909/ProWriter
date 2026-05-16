@@ -7,10 +7,10 @@ import { useI18n } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { useAuth } from "@/auth";
 import { api } from "@/api";
-import { Sun, Moon, Languages, User, Camera, Info, Loader2 } from "lucide-react";
+import { Sun, Moon, Monitor, Languages, User, Camera, Info, Loader2 } from "lucide-react";
 
 export function SettingsPage() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, themeMode, setThemeMode } = useTheme();
   const { t, lang, toggleLang } = useI18n();
   const { toast } = useToast();
   const { user, updateUser } = useAuth();
@@ -185,22 +185,41 @@ export function SettingsPage() {
                   </p>
                   <p className="text-xs text-surface-500 mt-0.5">{t("settings.themeDesc")}</p>
                 </div>
-                <button
-                  onClick={toggleTheme}
-                  className="relative h-7 w-12 rounded-full bg-surface-200 transition-colors hover:bg-surface-300 cursor-pointer dark:bg-surface-700 dark:hover:bg-surface-600"
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm transition-transform ${
-                      theme === "dark" ? "translate-x-5" : ""
+                <div className="flex items-center gap-1 rounded-lg bg-surface-100 p-1 dark:bg-surface-800">
+                  <button
+                    onClick={() => setThemeMode("system")}
+                    className={`flex items-center justify-center h-8 w-8 rounded-md transition-all cursor-pointer ${
+                      themeMode === "system"
+                        ? "bg-white text-surface-900 shadow-sm dark:bg-surface-700 dark:text-surface-100"
+                        : "text-surface-400 hover:text-surface-600 dark:hover:text-surface-300"
                     }`}
+                    title={t("nav.followSystem")}
                   >
-                    {theme === "light" ? (
-                      <Sun className="h-3.5 w-3.5 text-amber-500" />
-                    ) : (
-                      <Moon className="h-3.5 w-3.5 text-brand-500" />
-                    )}
-                  </span>
-                </button>
+                    <Monitor className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setThemeMode("light")}
+                    className={`flex items-center justify-center h-8 w-8 rounded-md transition-all cursor-pointer ${
+                      themeMode === "light"
+                        ? "bg-white text-amber-500 shadow-sm dark:bg-surface-700"
+                        : "text-surface-400 hover:text-surface-600 dark:hover:text-surface-300"
+                    }`}
+                    title={t("nav.lightMode")}
+                  >
+                    <Sun className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setThemeMode("dark")}
+                    className={`flex items-center justify-center h-8 w-8 rounded-md transition-all cursor-pointer ${
+                      themeMode === "dark"
+                        ? "bg-white text-brand-500 shadow-sm dark:bg-surface-700 dark:text-brand-400"
+                        : "text-surface-400 hover:text-surface-600 dark:hover:text-surface-300"
+                    }`}
+                    title={t("nav.darkMode")}
+                  >
+                    <Moon className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
               <Separator />
