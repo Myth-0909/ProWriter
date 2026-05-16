@@ -350,6 +350,28 @@ router.delete("/conversations", async (req: Request, res: Response) => {
   }
 });
 
+// --- Activity Log (authenticated) ---
+router.post("/log", async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { action, detail } = req.body;
+    if (!action) {
+      res.status(400).json({ error: "action is required" });
+      return;
+    }
+    await prisma.activityLog.create({
+      data: {
+        userId: authReq.user!.userId,
+        action,
+        detail: detail || null,
+      },
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // --- Feedback (authenticated) ---
 router.post("/feedback", async (req: Request, res: Response) => {
   try {

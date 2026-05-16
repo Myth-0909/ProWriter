@@ -21,6 +21,7 @@ model User {
   documents     Document[]
   conversations Conversation[]
   feedbacks     ChatFeedback[]
+  activityLogs  ActivityLog[]
 
   @@map("users")
 }
@@ -82,4 +83,18 @@ model ChatFeedback {
 
   @@index([userId])
   @@map("chat_feedbacks")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  action    String   // e.g. "chat_open", "chat_send", "chat_feedback", "chat_delete", "chat_clear"
+  detail    String?  // optional extra info (personality, message count, etc.)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, action])
+  @@map("activity_logs")
 }

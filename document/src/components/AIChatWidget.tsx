@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Bot, X, Send, Sparkles, Smile, ChevronDown, ThumbsUp, ThumbsDown, Star, Trash2 } from "lucide-react";
+import { Bot, X, Send, Sparkles, Smile, ChevronDown, ThumbsUp, ThumbsDown, Star, Trash2, Check, Pencil } from "lucide-react";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { useI18n } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
@@ -150,9 +150,15 @@ export function AIChatWidget() {
   const [showRating, setShowRating] = useState(false);
   const [showDislikeOpts, setShowDislikeOpts] = useState(false);
   const [hoverStar, setHoverStar] = useState(0);
+  const [closingRating, setClosingRating] = useState(false);
+  const [closingDislike, setClosingDislike] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedMsgs, setSelectedMsgs] = useState<Set<number>>(new Set());
+  const [deleteMsgConfirm, setDeleteMsgConfirm] = useState(false);
   const feedbackDoneRef = useRef<Set<number>>(new Set());
+  const restoredRef = useRef(false);
 
   // Save conversation to DB
   const saveConversation = useCallback(async () => {
@@ -194,12 +200,48 @@ export function AIChatWidget() {
     return () => window.removeEventListener("resize", updatePos);
   }, []);
 
-  // Greet on open, re-greet on personality change
+  // On open: restore from DB or greet. On close: save. On personality change: re-greet.
   useEffect(() => {
     if (!open) {
-      setMessages([]);
+      // Save conversation before closing
+      if (messages.length > 0) {
+        api.saveConversation({ messages, personality: personalityRef.current }).catch(() => {});
+      }
+      restoredRef.current = false;
       return;
     }
+    // Log open
+    api.logActivity({ action: "chat_open", detail: personalityRef.current }).catch(() => {});
+
+    // Try to restore last conversation from DB
+    if (!restoredRef.current) {
+      restoredRef.current = true;
+      api.getConversations().then((res) => {
+        if (res.conversations.length > 0) {
+          const last = res.conversations[0];
+          const msgs = last.messages as Message[];
+          if (msgs.length > 0) {
+            setMessages(msgs);
+            memoryRef.current = msgs;
+            return;
+          }
+        }
+        // No saved conversation — greet
+        greetUser();
+      }).catch(() => greetUser());
+    } else {
+      greetUser();
+    }
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-greet on personality change (only if already open)
+  useEffect(() => {
+    if (open && restoredRef.current) {
+      greetUser();
+    }
+  }, [personality]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const greetUser = useCallback(() => {
     const pers = personalityRef.current;
     api.aiGreeting({ userName: user?.name || "", personality: pers })
       .then((res) => {
@@ -217,7 +259,7 @@ export function AIChatWidget() {
         };
         setMessages([{ role: "assistant", content: fallbacks[pers] || fallbacks.normal }]);
       });
-  }, [open, personality]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user?.name]);
 
   // Auto-scroll
   useEffect(() => {
@@ -265,6 +307,7 @@ export function AIChatWidget() {
     setMessages(withUser);
     setInput("");
     setLoading(true);
+    api.logActivity({ action: "chat_send", detail: text.slice(0, 100) }).catch(() => {});
 
     const memory = [...memoryRef.current, userMsg];
     memoryRef.current = memory;
@@ -391,6 +434,9 @@ export function AIChatWidget() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => { setEditMode(!editMode); setSelectedMsgs(new Set()); }} className={cn("h-8 w-8", editMode && "bg-brand-100 text-brand-600 dark:bg-brand-900 dark:text-brand-400")} title="编辑">
+                  <Pencil className="h-4 w-4" />
+                </Button>
                 <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(true)} className="h-8 w-8" title={t("ai.clearHistory")}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -451,7 +497,25 @@ export function AIChatWidget() {
                   const isUser = msg.role === "user";
                   const isLastAssistant = !isUser && i === messages.length - 1;
                   return (
-                    <div key={i} className={cn("mb-4 flex gap-2", isUser ? "flex-row-reverse" : "flex-row")}>
+                    <div key={i} className={cn("mb-4 flex gap-2 items-start", isUser ? "flex-row-reverse" : "flex-row")}>
+                      {/* Edit checkbox */}
+                      {editMode && (
+                        <button
+                          onClick={() => {
+                            const next = new Set(selectedMsgs);
+                            next.has(i) ? next.delete(i) : next.add(i);
+                            setSelectedMsgs(next);
+                          }}
+                          className={cn(
+                            "shrink-0 mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                            selectedMsgs.has(i)
+                              ? "bg-brand-500 border-brand-500 text-white"
+                              : "border-surface-300 hover:border-brand-400 dark:border-surface-600"
+                          )}
+                        >
+                          {selectedMsgs.has(i) && <Check className="h-3 w-3" />}
+                        </button>
+                      )}
                       {/* Avatar */}
                       {isUser ? (
                         avatarUrl ? (
@@ -485,7 +549,8 @@ export function AIChatWidget() {
                           <button
                             onClick={() => {
                               if (showRating && feedbackMsgIdx === i) {
-                                setShowRating(false); setFeedbackMsgIdx(null);
+                                setClosingRating(true);
+                                setTimeout(() => { setShowRating(false); setFeedbackMsgIdx(null); setClosingRating(false); }, 180);
                               } else {
                                 setFeedbackMsgIdx(i); setShowRating(true); setShowDislikeOpts(false);
                               }
@@ -498,7 +563,8 @@ export function AIChatWidget() {
                           <button
                             onClick={() => {
                               if (showDislikeOpts && feedbackMsgIdx === i) {
-                                setShowDislikeOpts(false); setFeedbackMsgIdx(null);
+                                setClosingDislike(true);
+                                setTimeout(() => { setShowDislikeOpts(false); setFeedbackMsgIdx(null); setClosingDislike(false); }, 180);
                               } else {
                                 setFeedbackMsgIdx(i); setShowDislikeOpts(true); setShowRating(false);
                               }
@@ -510,12 +576,16 @@ export function AIChatWidget() {
                           </button>
                           {/* Star rating popover */}
                           {showRating && feedbackMsgIdx === i && (
-                            <div className="flex items-center gap-0.5 bg-white border border-surface-200 rounded-lg px-1.5 py-1 shadow-sm dark:bg-surface-800 dark:border-surface-700 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                            <div className={cn(
+                              "flex items-center gap-0.5 bg-white border border-surface-200 rounded-lg px-1.5 py-1 shadow-sm dark:bg-surface-800 dark:border-surface-700",
+                              closingRating ? "animate-out fade-out slide-out-to-bottom-1 duration-150" : "animate-in fade-in slide-in-from-bottom-1 duration-200"
+                            )}>
                               {[1, 2, 3, 4, 5].map((star) => (
                                 <button
                                   key={star}
                                   onClick={async () => {
                                     await api.sendFeedback({ messageContent: msg.content, feedbackType: "like", rating: star });
+                                    api.logActivity({ action: "chat_feedback", detail: `like:${star}` }).catch(() => {});
                                     toast(t("ai.feedbackThanks"), "success");
                                     feedbackDoneRef.current.add(i);
                                     setShowRating(false); setFeedbackMsgIdx(null);
@@ -535,12 +605,16 @@ export function AIChatWidget() {
                           )}
                           {/* Dislike options popover */}
                           {showDislikeOpts && feedbackMsgIdx === i && (
-                            <div className="flex flex-col gap-0.5 bg-white border border-surface-200 rounded-lg px-2 py-1.5 shadow-sm dark:bg-surface-800 dark:border-surface-700 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                            <div className={cn(
+                              "flex flex-col gap-0.5 bg-white border border-surface-200 rounded-lg px-2 py-1.5 shadow-sm dark:bg-surface-800 dark:border-surface-700",
+                              closingDislike ? "animate-out fade-out slide-out-to-bottom-1 duration-150" : "animate-in fade-in slide-in-from-bottom-1 duration-200"
+                            )}>
                               {[t("ai.dislikeInaccurate"), t("ai.dislikeUnexpected"), t("ai.dislikeIncomplete"), t("ai.dislikeTone"), t("ai.dislikeOther")].map((reason) => (
                                 <button
                                   key={reason}
                                   onClick={async () => {
                                     await api.sendFeedback({ messageContent: msg.content, feedbackType: "dislike", reason });
+                                    api.logActivity({ action: "chat_feedback", detail: `dislike:${reason}` }).catch(() => {});
                                     toast(t("ai.feedbackThanks"), "success");
                                     feedbackDoneRef.current.add(i);
                                     setShowDislikeOpts(false); setFeedbackMsgIdx(null);
@@ -583,6 +657,17 @@ export function AIChatWidget() {
             <div ref={chatEndRef} />
           </div>
 
+          {/* Delete selected bar */}
+          {editMode && selectedMsgs.size > 0 && (
+            <div className="shrink-0 border-t border-surface-200 bg-red-50 px-4 py-2 flex items-center justify-between dark:bg-red-950 dark:border-surface-700">
+              <span className="text-xs text-red-600 dark:text-red-400">已选择 {selectedMsgs.size} 条消息</span>
+              <Button size="sm" variant="destructive" onClick={() => setDeleteMsgConfirm(true)}>
+                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                删除
+              </Button>
+            </div>
+          )}
+
           {/* Input */}
           <div className="shrink-0 border-t border-surface-200 px-3 py-3 dark:border-surface-700">
             <div className="flex items-center gap-2">
@@ -609,6 +694,29 @@ export function AIChatWidget() {
         </div>
       )}
 
+      {/* Delete selected messages confirmation */}
+      <ConfirmModal
+        open={deleteMsgConfirm}
+        onOpenChange={setDeleteMsgConfirm}
+        title="删除消息"
+        description={`确定要删除选中的 ${selectedMsgs.size} 条消息吗？此操作不可撤销。`}
+        confirmLabel="删除"
+        cancelLabel={t("common.cancel")}
+        variant="danger"
+        onConfirm={() => {
+          const indices = Array.from(selectedMsgs).sort((a, b) => b - a);
+          const newMsgs = [...messages];
+          indices.forEach((idx) => newMsgs.splice(idx, 1));
+          setMessages(newMsgs);
+          memoryRef.current = newMsgs;
+          saveMemory(newMsgs);
+          setSelectedMsgs(new Set());
+          api.logActivity({ action: "chat_delete", detail: `deleted_${selectedMsgs.size}_msgs` }).catch(() => {});
+          toast("消息已删除", "success");
+          setDeleteMsgConfirm(false);
+        }}
+      />
+
       {/* Delete confirmation */}
       <ConfirmModal
         open={deleteConfirm}
@@ -624,6 +732,7 @@ export function AIChatWidget() {
             setMessages([]);
             memoryRef.current = [];
             localStorage.removeItem(MEMORY_KEY);
+            api.logActivity({ action: "chat_clear" }).catch(() => {});
             toast(t("ai.cleared"), "success");
           } catch {
             toast(t("ai.clearFailed"), "error");

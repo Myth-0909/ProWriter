@@ -143,4 +143,9 @@ export const api = {
     request<{ feedback: { id: string } }>(
       "/ai/feedback", { method: "POST", body: JSON.stringify(data) }
     ),
+
+  logActivity: (data: { action: string; detail?: string }) =>
+    request<{ success: boolean }>(
+      "/ai/log", { method: "POST", body: JSON.stringify(data) }
+    ),
 };
