@@ -4,6 +4,7 @@ import { Search, Star, Trash2,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Scrollbar } from "@/components/ui/scrollbar";
 import { useI18n } from "@/components/I18nProvider";
 import { useDocuments } from "@/store";
 import { useToast } from "@/components/Toast";
@@ -77,7 +78,7 @@ export function DocumentList({ activeId, onSelect }: DocumentListProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-2">
+      <Scrollbar className="flex-1 px-2 py-2">
         <div className="flex flex-col gap-1">
           {documents.map((doc) => {
             const active = isActive(doc.id);
@@ -164,7 +165,7 @@ export function DocumentList({ activeId, onSelect }: DocumentListProps) {
             );
           })}
         </div>
-      </div>
+      </Scrollbar>
 
       <ConfirmModal
         open={!!deleteTarget}

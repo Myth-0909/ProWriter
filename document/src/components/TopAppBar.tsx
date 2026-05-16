@@ -44,7 +44,7 @@ export function TopAppBar({
   onToggleSidebar,
 }: TopAppBarProps) {
   const { t, lang, toggleLang } = useI18n();
-  const { theme, themeMode, toggleTheme } = useTheme();
+  const { theme, themeMode, setThemeMode } = useTheme();
   const { user } = useAuth();
 
   const avatarUrl = user?.avatar
@@ -94,28 +94,41 @@ export function TopAppBar({
           </>
         )}
 
-        {/* Theme toggle button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          className="h-8 w-8 text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100"
-          title={
-            themeMode === "system"
-              ? t("nav.followSystem")
-              : theme === "light"
-                ? t("nav.darkMode")
-                : t("nav.lightMode")
-          }
-        >
-          {themeMode === "system" ? (
-            <Monitor className="h-4 w-4" />
-          ) : theme === "light" ? (
-            <Sun className="h-4 w-4" />
-          ) : (
-            <Moon className="h-4 w-4" />
-          )}
-        </Button>
+        {/* Theme dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100"
+            >
+              {themeMode === "system" ? (
+                <Monitor className="h-4 w-4" />
+              ) : theme === "light" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[160px]">
+            <DropdownMenuItem onClick={() => setThemeMode("system")}>
+              <Monitor className="h-4 w-4" />
+              <span>{t("nav.followSystem")}</span>
+              {themeMode === "system" && <span className="ml-auto text-brand-500">✓</span>}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setThemeMode("light")}>
+              <Sun className="h-4 w-4" />
+              <span>{t("nav.lightMode")}</span>
+              {themeMode === "light" && <span className="ml-auto text-brand-500">✓</span>}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setThemeMode("dark")}>
+              <Moon className="h-4 w-4" />
+              <span>{t("nav.darkMode")}</span>
+              {themeMode === "dark" && <span className="ml-auto text-brand-500">✓</span>}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* User menu */}
         <DropdownMenu>
