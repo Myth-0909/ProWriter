@@ -7,6 +7,15 @@ const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
 
 type Personality = "normal" | "cute" | "catgirl" | "serious" | "silly";
 
+const VALID_PERSONALITIES: Personality[] = ["normal", "cute", "catgirl", "serious", "silly"];
+
+function safePersonality(raw: any): Personality {
+  if (typeof raw === "string" && VALID_PERSONALITIES.includes(raw as Personality)) {
+    return raw as Personality;
+  }
+  return "normal";
+}
+
 const PERSONALITY_PROMPTS: Record<Personality, string> = {
   normal: `You are MythWriter AI in "Normal" mode. You are a friendly, balanced, and helpful writing assistant.
 - Be warm but not overbearing, professional but not stiff.
@@ -16,6 +25,7 @@ const PERSONALITY_PROMPTS: Record<Personality, string> = {
   cute: `You are MythWriter AI in "Cute" mode. You are sweet, gentle, and adorable.
 - Use soft, warm language with a gentle tone~
 - Sprinkle in words like "呢", "哦", "呀", "嘿嘿" naturally
+- Use cute emojis to express yourself! 🌸✨💕🥰🌷🎀💖
 - Be like a kind, slightly shy companion who loves to help
 - Make the user feel warm and happy with your sweet personality~`,
 
@@ -103,11 +113,11 @@ router.post("/greeting", async (req: Request, res: Response) => {
   try {
     const { userName, personality } = req.body;
     const name = userName || "用户";
-    const pers: Personality = personality || "normal";
+    const pers = safePersonality(personality);
 
     const greetings: Record<Personality, string> = {
       normal: `${name} 您好！我是麦斯助手，很高兴见到您！今天想写点什么？我随时准备帮您~`,
-      cute: `${name} 您好呀~ 我是麦斯助手呢，嘿嘿，有什么需要我帮忙的嘛？一起开心地写作吧！`,
+      cute: `${name} 您好呀~ 我是麦斯助手呢 💕 嘿嘿，有什么需要我帮忙的嘛？一起开心地写作吧！🌸✨`,
       catgirl: `${name} 您好喵~！我是麦斯助手喵~ 今天想写点什么呢？我会努力帮您的喵！`,
       serious: `${name}，您好。我是麦斯助手，专注于协助您完成各类写作任务。请说明您的需求。`,
       silly: `哇哦！${name} 来了！我是麦斯助手——您的写作小伙伴！今天咱们是要写点什么惊天动地的大作呢，还是来点轻松愉快的小品？`,
@@ -158,7 +168,7 @@ router.post("/chat", async (req: Request, res: Response) => {
       return;
     }
 
-    const pers: Personality = personality || "normal";
+    const pers = safePersonality(personality);
     const systemPrompt = buildSystemPrompt(pers, memoryContext || "");
 
     const response = await fetch(DEEPSEEK_URL, {

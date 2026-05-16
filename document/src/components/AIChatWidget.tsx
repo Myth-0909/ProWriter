@@ -9,6 +9,15 @@ import { api } from "@/api";
 
 type Personality = "normal" | "cute" | "catgirl" | "serious" | "silly";
 
+const VALID_PERSONALITIES: Personality[] = ["normal", "cute", "catgirl", "serious", "silly"];
+
+function safePersonality(raw: string | null): Personality {
+  if (raw && VALID_PERSONALITIES.includes(raw as Personality)) {
+    return raw as Personality;
+  }
+  return "normal";
+}
+
 const PERSONALITY_OPTIONS: { key: Personality; label: string; emoji: string }[] = [
   { key: "normal", label: "正常", emoji: "✨" },
   { key: "cute", label: "可爱", emoji: "🌸" },
@@ -57,9 +66,9 @@ export function AIChatWidget() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [personality, setPersonality] = useState<Personality>(() => {
-    return (localStorage.getItem("mythwriter_ai_personality") as Personality) || "normal";
-  });
+  const [personality, setPersonality] = useState<Personality>(() =>
+    safePersonality(localStorage.getItem("mythwriter_ai_personality"))
+  );
   const [personalityOpen, setPersonalityOpen] = useState(false);
   const memoryRef = useRef<Message[]>(loadMemory());
   const greetedRef = useRef(false);
@@ -190,7 +199,7 @@ export function AIChatWidget() {
     }
   };
 
-  const currentPersonality = PERSONALITY_OPTIONS.find((p) => p.key === personality)!;
+  const currentPersonality = PERSONALITY_OPTIONS.find((p) => p.key === personality) || PERSONALITY_OPTIONS[0];
 
   return (
     <>
