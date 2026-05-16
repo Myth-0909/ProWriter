@@ -52,6 +52,16 @@ A full-stack cross-platform writing application — your intelligent document wo
 - **RESTful API** — Full backend with Express + Prisma
 - **Weekly Writing Stats** — ECharts-powered activity bar chart
 - **Export to HTML** — Download document as standalone HTML file
+- **File Import** — Import TXT, MD, DOCX files as new documents
+
+#### AI Writing Assistant (MythWriter AI)
+- **Smart Conversations** — Multi-turn dialogue with short-term and long-term memory
+- **Streaming Output** — Real-time typewriter effect via SSE (Server-Sent Events)
+- **5 Personalities** — Normal, Cute, Catgirl (喵~), Serious, Silly — each with distinct tone and style, instantly switchable with persistent preference
+- **Auto Document Creation** — AI generates content directly into new documents when asked to write
+- **Prompt Injection Protection** — Detects and blocks jailbreak/DAN/instruction-leak attacks
+- **Draggable Float Button** — Sparkles icon, drag to reposition, click to open chat dialog
+- **Proactive Greeting** — AI greets user by name in the selected personality style on open
 
 ### Tech Stack
 
@@ -66,6 +76,8 @@ A full-stack cross-platform writing application — your intelligent document wo
 | ORM | Prisma |
 | Database | MySQL |
 | Auth | JWT + bcryptjs |
+| AI | DeepSeek Chat API |
+| Doc Parse | Mammoth (.docx) |
 
 ### Project Structure
 
@@ -74,7 +86,7 @@ cc_figma/
 ├── document/                  # Frontend (React + Tauri)
 │   ├── src/
 │   │   ├── pages/             # 7 page components
-│   │   ├── components/        # 15+ shared components
+│   │   ├── components/        # Shared components (AIChatWidget, Particles, etc.)
 │   │   ├── api.ts             # API client
 │   │   ├── auth.tsx           # Auth context provider
 │   │   ├── store.tsx          # Document state management
@@ -84,7 +96,7 @@ cc_figma/
 │   ├── prisma/
 │   │   └── schema.prisma      # Database schema
 │   └── src/
-│       ├── routes/            # API routes (auth, documents, users, stats)
+│       ├── routes/            # API routes (auth, documents, users, stats, ai)
 │       └── middleware/        # JWT authentication middleware
 └── start.sh                   # One-click start script
 ```
@@ -103,9 +115,10 @@ cc_figma/
 git clone https://github.com/Myth-0909/MythWriter.git
 cd cc_figma
 
-# 2. Configure MySQL
-# Create a MySQL user or use root, then update server/.env:
+# 2. Configure environment
+# Update server/.env with your MySQL credentials and DeepSeek API key:
 # DATABASE_URL="mysql://root:yourpassword@127.0.0.1:3306/prowriter"
+# DEEPSEEK_API_KEY="sk-your-deepseek-api-key"
 
 # 3. Install dependencies
 cd server && npm install && npx prisma db push && cd ..
@@ -140,6 +153,8 @@ cd document && pnpm install && cd ..
 | PATCH | `/api/documents/:id/trash` | Move to trash |
 | PATCH | `/api/documents/:id/restore` | Restore from trash |
 | GET | `/api/stats/weekly` | Weekly writing statistics |
+| POST | `/api/ai/chat` | AI chat (streaming SSE) |
+| POST | `/api/ai/greeting` | AI greeting by personality |
 
 ### License
 
@@ -191,6 +206,16 @@ MIT
 - **RESTful API** — 完整的 Express + Prisma 后端
 - **每周写作统计** — ECharts 驱动的活跃度柱状图
 - **导出 HTML** — 将文档下载为独立 HTML 文件
+- **文件导入** — 支持导入 TXT、MD、DOCX 文件并创建为新文档
+
+#### AI 写作助手（麦斯助手）
+- **智能对话** — 支持多轮对话，具备短期记忆和长期记忆
+- **流式输出** — 基于 SSE 的实时打字机效果，可随时中断生成
+- **5 种性格** — 正常、可爱、猫娘（喵~）、严肃、搞怪，每种有独特语气风格，即时切换并持久化偏好
+- **自动创建文档** — 用户要求写作时，AI 自动生成内容并创建新文档
+- **提示词注入防护** — 检测并拦截越狱/DAN/指令泄露等攻击
+- **可拖拽悬浮按钮** — Sparkles 图标，可拖动位置，点击展开对话窗口
+- **主动问好** — 打开对话时，AI 以选中性格风格主动问候用户
 
 ### 技术栈
 
@@ -205,6 +230,8 @@ MIT
 | ORM | Prisma |
 | 数据库 | MySQL |
 | 认证 | JWT + bcryptjs |
+| AI | DeepSeek Chat API |
+| 文档解析 | Mammoth (.docx) |
 
 ### 项目结构
 
@@ -213,7 +240,7 @@ cc_figma/
 ├── document/                  # 前端 (React + Tauri)
 │   ├── src/
 │   │   ├── pages/             # 7 个页面组件
-│   │   ├── components/        # 15+ 共享组件
+│   │   ├── components/        # 共享组件 (AIChatWidget, Particles 等)
 │   │   ├── api.ts             # API 客户端
 │   │   ├── auth.tsx           # 认证上下文提供者
 │   │   ├── store.tsx          # 文档状态管理
@@ -223,7 +250,7 @@ cc_figma/
 │   ├── prisma/
 │   │   └── schema.prisma      # 数据库结构
 │   └── src/
-│       ├── routes/            # API 路由 (auth, documents, users, stats)
+│       ├── routes/            # API 路由 (auth, documents, users, stats, ai)
 │       └── middleware/        # JWT 认证中间件
 └── start.sh                   # 一键启动脚本
 ```
@@ -279,6 +306,8 @@ cd document && pnpm install && cd ..
 | PATCH | `/api/documents/:id/trash` | 移入回收站 |
 | PATCH | `/api/documents/:id/restore` | 从回收站恢复 |
 | GET | `/api/stats/weekly` | 每周写作统计 |
+| POST | `/api/ai/chat` | AI 对话（SSE 流式） |
+| POST | `/api/ai/greeting` | AI 性格化问候 |
 
 ### 开源协议
 
