@@ -1,6 +1,7 @@
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import type { OverlayScrollbarsComponentProps } from "overlayscrollbars-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/ThemeProvider";
 
 const sharedOptions: OverlayScrollbarsComponentProps["options"] = {
   scrollbars: {
@@ -18,8 +19,10 @@ interface ScrollbarProps extends OverlayScrollbarsComponentProps {
 }
 
 export function Scrollbar({ className, children, options, ...props }: ScrollbarProps) {
+  const { theme } = useTheme();
   return (
     <OverlayScrollbarsComponent
+      key={theme}
       options={{ ...sharedOptions, ...options }}
       className={cn("os-host-flex", className)}
       {...props}

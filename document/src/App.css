@@ -65,7 +65,7 @@ body.dark {
   --os-handle-bg-active: #3b82f6;
   --os-handle-border-radius: 9999px;
   --os-handle-interactive-area-offset: 4;
-  --os-size: 8px;
+  --os-size: 10px;
   --os-padding-perpendicular: 2px;
   --os-track-bg: transparent;
   --os-track-bg-hover: transparent;
@@ -73,10 +73,11 @@ body.dark {
   --os-transition-duration: 0.2s;
 }
 
-.dark [data-overlayscrollbars-theme="os-theme-mythwriter"] {
-  --os-handle-bg: #3b82f6;
-  --os-handle-bg-hover: #60a5fa;
-  --os-handle-bg-active: #93c5fd;
+html.dark [data-overlayscrollbars-theme="os-theme-mythwriter"] {
+  --os-handle-bg: #60a5fa;
+  --os-handle-bg-hover: #93c5fd;
+  --os-handle-bg-active: #bfdbfe;
+  --os-size: 10px;
 }
 
 /* Global native scrollbar fallback for non-OS areas */
@@ -99,11 +100,11 @@ body.dark {
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #3b82f6;
+  background: #60a5fa;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #60a5fa;
+  background: #93c5fd;
 }
 
 ::-webkit-scrollbar-corner {
@@ -117,7 +118,7 @@ body.dark {
 }
 
 .dark * {
-  scrollbar-color: #3b82f6 transparent;
+  scrollbar-color: #60a5fa transparent;
 }
 
 /* OverlayScrollbars: make host fill flex containers */
