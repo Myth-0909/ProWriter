@@ -219,10 +219,14 @@ router.post("/chat", async (req: Request, res: Response) => {
     }
 
     // Set up SSE
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders();
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
+    // Send initial comment to establish SSE connection
+    res.write(":ok\n\n");
 
     const reader = response.body?.getReader();
     if (!reader) {

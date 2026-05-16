@@ -67,16 +67,25 @@ async function streamChat(
     signal,
   });
 
+  const ct = res.headers.get("content-type") || "";
+
+  // Handle error responses
   if (!res.ok) {
-    // If the server returned JSON (non-streaming), parse it
-    const ct = res.headers.get("content-type") || "";
     if (ct.includes("application/json")) {
       const err = await res.json();
-      throw new Error(err.error || err.reply || `HTTP ${res.status}`);
+      throw new Error(err.error || `HTTP ${res.status}`);
     }
     throw new Error(`HTTP ${res.status}`);
   }
 
+  // Handle JSON response (security block, non-streaming)
+  if (ct.includes("application/json")) {
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    return { reply: json.reply || "", action: json.action || null };
+  }
+
+  // Handle SSE streaming response
   const reader = res.body?.getReader();
   if (!reader) throw new Error("No response body");
 
@@ -108,6 +117,11 @@ async function streamChat(
         if (e.message && !e.message.includes("JSON")) throw e;
       }
     }
+  }
+
+  // Fallback: if no done event received, use accumulated content as reply
+  if (!finalReply) {
+    console.warn("SSE stream ended without done event, using accumulated content");
   }
 
   return { reply: finalReply, action: finalAction };
