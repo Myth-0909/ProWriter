@@ -114,8 +114,13 @@ export const api = {
   getWeeklyStats: () =>
     request<{ stats: { day: string; date: string; words: number }[] }>("/stats/weekly"),
 
-  aiChat: (messages: { role: string; content: string }[]) =>
+  aiGreeting: (data: { userName: string; personality: string }) =>
+    request<{ greeting: string }>(
+      "/ai/greeting", { method: "POST", body: JSON.stringify(data) }
+    ),
+
+  aiChat: (data: { messages: { role: string; content: string }[]; personality: string; memoryContext: string }) =>
     request<{ reply: string; action: { type: string; title: string; content: string } | null }>(
-      "/ai/chat", { method: "POST", body: JSON.stringify({ messages }) }
+      "/ai/chat", { method: "POST", body: JSON.stringify(data) }
     ),
 };
