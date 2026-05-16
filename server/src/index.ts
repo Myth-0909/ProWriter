@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth";
 import documentRoutes from "./routes/documents";
 import userRoutes from "./routes/users";
 import statsRoutes from "./routes/stats";
+import aiRoutes from "./routes/ai";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {

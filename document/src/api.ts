@@ -113,4 +113,9 @@ export const api = {
 
   getWeeklyStats: () =>
     request<{ stats: { day: string; date: string; words: number }[] }>("/stats/weekly"),
+
+  aiChat: (messages: { role: string; content: string }[]) =>
+    request<{ reply: string; action: { type: string; title: string; content: string } | null }>(
+      "/ai/chat", { method: "POST", body: JSON.stringify({ messages }) }
+    ),
 };

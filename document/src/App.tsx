@@ -11,6 +11,7 @@ import { SettingsPage } from "@/pages/SettingsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { ShareModal } from "@/components/ShareModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { AIChatWidget } from "@/components/AIChatWidget";
 import { useDocuments } from "@/store";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
@@ -163,6 +164,8 @@ export default function App() {
           </PageTransition>
         </div>
       </div>
+
+      <AIChatWidget />
 
       <ShareModal open={shareOpen} onOpenChange={setShareOpen} />
 
