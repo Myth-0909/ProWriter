@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Upload,
   Loader2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import mammoth from "mammoth";
@@ -56,6 +57,7 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
   const [actionLoading, setActionLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [chartData, setChartData] = useState<{ days: string[]; words: number[] }>({
@@ -149,8 +151,23 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
     }
   };
 
-  const mainDocs = documents.filter((d) => !d.isFavorite);
-  const favDocs = favorites;
+  const fuzzyMatch = (text: string, query: string) => {
+    if (!query) return true;
+    const lower = text.toLowerCase();
+    const q = query.toLowerCase();
+    // Simple fuzzy: all query characters must appear in order
+    let qi = 0;
+    for (let i = 0; i < lower.length && qi < q.length; i++) {
+      if (lower[i] === q[qi]) qi++;
+    }
+    return qi === q.length;
+  };
+
+  const filteredDocs = searchQuery
+    ? documents.filter((d) => fuzzyMatch(d.title, searchQuery) || fuzzyMatch(d.preview || "", searchQuery))
+    : documents;
+  const mainDocs = filteredDocs.filter((d) => !d.isFavorite);
+  const favDocs = favorites.filter((d) => !searchQuery || fuzzyMatch(d.title, searchQuery) || fuzzyMatch(d.preview || "", searchQuery));
 
   const getCategoryKey = (cat: DocumentCategory) => {
     const map: Record<DocumentCategory, "card.sciFi" | "card.fantasy" | "card.design" | "card.journal" | "card.planning" | "card.research"> = {
@@ -171,7 +188,27 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
             </h2>
             <p className="mt-2 text-sm text-surface-500">{t("documents.subtitle")}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Search input */}
+            <div className="relative flex-1 max-w-[320px]">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />
+              <input
+                type="text"
+                placeholder={t("documents.search")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-surface-200 bg-white py-2 pl-9 pr-3 text-sm text-surface-900 placeholder:text-surface-400 transition-colors focus:outline-none focus:ring-2 focus:ring-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
             {/* Import button */}
             <input
               ref={fileInputRef}
@@ -222,6 +259,7 @@ export function DocumentCenterPage({ onOpenDoc }: DocumentCenterPageProps) {
                 })}
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </div>
         </div>
 

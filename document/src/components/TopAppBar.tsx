@@ -43,7 +43,7 @@ export function TopAppBar({
   onToggleSidebar,
 }: TopAppBarProps) {
   const { t, lang, toggleLang } = useI18n();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, themeMode, toggleTheme } = useTheme();
   const { user } = useAuth();
 
   const avatarUrl = user?.avatar
@@ -150,7 +150,13 @@ export function TopAppBar({
               ) : (
                 <Sun className="h-4 w-4" />
               )}
-              <span>{theme === "light" ? t("nav.darkMode") : t("nav.lightMode")}</span>
+              <span>
+                {themeMode === "system"
+                  ? t("nav.followSystem")
+                  : theme === "light"
+                    ? t("nav.darkMode")
+                    : t("nav.lightMode")}
+              </span>
             </DropdownMenuItem>
 
             {/* Language switch */}

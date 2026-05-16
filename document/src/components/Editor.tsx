@@ -66,6 +66,7 @@ export function Editor({ documentId }: EditorProps) {
   const [showFontSizePicker, setShowFontSizePicker] = useState(false);
   const [showLineHeightPicker, setShowLineHeightPicker] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selectionChars, setSelectionChars] = useState(0);
 
   const editor = useEditor({
     extensions: [
@@ -82,6 +83,11 @@ export function Editor({ documentId }: EditorProps) {
     onUpdate: ({ editor: ed }) => {
       updateCounts(ed);
       autoSave(ed);
+    },
+    onSelectionUpdate: ({ editor: ed }) => {
+      const { from, to } = ed.state.selection;
+      const text = ed.state.doc.textBetween(from, to);
+      setSelectionChars(text.length);
     },
     editorProps: {
       attributes: {
@@ -336,6 +342,14 @@ export function Editor({ documentId }: EditorProps) {
           <div className="mb-8 border-b border-surface-200 dark:border-surface-800" />
 
           <EditorContent editor={editor} />
+
+          {/* Selection character count */}
+          <div
+            className="text-xs text-surface-400 transition-all duration-200 text-right mt-1"
+            style={{ opacity: selectionChars > 0 ? 1 : 0, height: selectionChars > 0 ? 16 : 0 }}
+          >
+            {selectionChars > 0 && `${t("editor.selected")} ${selectionChars} ${t("editor.characters")}`}
+          </div>
         </div>
       </div>
 

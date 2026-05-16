@@ -80,7 +80,7 @@ export function DocumentCard({
           {t(categoryKey)}
         </span>
       </div>
-      <h4 className="mb-2 text-sm font-semibold leading-tight text-surface-900 dark:text-surface-100">
+      <h4 className="mb-2 text-sm font-semibold leading-tight text-surface-900 dark:text-surface-100 truncate">
         {title}
       </h4>
       <p className="mb-4 flex-1 text-xs leading-relaxed text-surface-500 line-clamp-3">

@@ -10,6 +10,7 @@ const translations = {
   "nav.settings": { zh: "设置", en: "Settings" },
   "nav.darkMode": { zh: "深色模式", en: "Dark Mode" },
   "nav.lightMode": { zh: "浅色模式", en: "Light Mode" },
+  "nav.followSystem": { zh: "跟随系统", en: "Follow System" },
   "nav.expand": { zh: "展开菜单", en: "Expand Menu" },
   "nav.collapse": { zh: "收起菜单", en: "Collapse Menu" },
 
@@ -50,6 +51,7 @@ const translations = {
   "editor.placeholder": { zh: "开始写作...", en: "Start writing..." },
   "editor.words": { zh: "字", en: "words" },
   "editor.characters": { zh: "字符", en: "characters" },
+  "editor.selected": { zh: "已选中", en: "Selected" },
   "editor.avgChars": { zh: "平均字/词", en: "avg. chars/word" },
   "editor.title": { zh: "标题", en: "Title" },
   "editor.searchDocs": { zh: "搜索文档...", en: "Search documents..." },
