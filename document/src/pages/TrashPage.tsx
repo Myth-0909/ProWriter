@@ -54,7 +54,7 @@ export function TrashPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950 relative">
       {(loading || actionLoading) && <LoadingOverlay />}
-      <div className="mx-auto max-w-[960px] px-4 sm:px-8 lg:px-20 py-8 sm:py-12 lg:py-20">
+      <div className="mx-auto max-w-[960px] px-20 py-20">
         <div className="mb-8 flex items-start justify-between">
           <div>
             <h2 className="text-[28px] font-bold leading-tight text-surface-900 dark:text-surface-100">

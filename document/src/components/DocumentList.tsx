@@ -65,7 +65,7 @@ export function DocumentList({ activeId, onSelect }: DocumentListProps) {
   };
 
   return (
-    <div className="flex h-full w-[280px] sm:w-[320px] shrink-0 flex-col border-r border-surface-200 bg-white dark:border-surface-800 dark:bg-surface-950">
+    <div className="flex h-full w-[320px] shrink-0 flex-col border-r border-surface-200 bg-white dark:border-surface-800 dark:bg-surface-950">
       <div className="border-b border-surface-200 px-4 py-4 dark:border-surface-800">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-surface-400" />

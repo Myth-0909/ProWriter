@@ -11,7 +11,6 @@ import { SettingsPage } from "@/pages/SettingsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { ShareModal } from "@/components/ShareModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { cn } from "@/lib/utils";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { useDocuments } from "@/store";
 import { useToast } from "@/components/Toast";
@@ -26,9 +25,7 @@ type Page = "editor" | "documents" | "favorites" | "share" | "login" | "trash" |
 function EditorPageContent({ activeDocId, setActiveDocId }: { activeDocId: string; setActiveDocId: (id: string) => void }) {
   return (
     <>
-      <div className="hidden lg:block shrink-0">
-        <DocumentList activeId={activeDocId} onSelect={setActiveDocId} />
-      </div>
+      <DocumentList activeId={activeDocId} onSelect={setActiveDocId} />
       <div className="flex-1">
         <Editor documentId={activeDocId} />
       </div>
@@ -146,20 +143,7 @@ export default function App() {
         />
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar: overlay on mobile, persistent on desktop */}
-          {!sidebarCollapsed && (
-            <div className="fixed inset-0 z-20 bg-black/30 lg:hidden" onClick={() => setSidebarCollapsed(true)} />
-          )}
-          <div
-            className={cn(
-              "z-30 transition-all duration-300",
-              sidebarCollapsed
-                ? "hidden lg:block"                        // hidden on mobile/tablet, shown collapsed on desktop
-                : "fixed inset-y-0 left-0 lg:relative"     // overlay on mobile/tablet, inline on desktop
-            )}
-          >
-            <SideNavBar activeNav={activeNav} onNavChange={handleNavChange} collapsed={sidebarCollapsed} />
-          </div>
+          <SideNavBar activeNav={activeNav} onNavChange={handleNavChange} collapsed={sidebarCollapsed} />
 
           <PageTransition pageKey={currentPage}>
             {currentPage === "editor" && (

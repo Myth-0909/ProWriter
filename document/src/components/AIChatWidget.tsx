@@ -297,35 +297,32 @@ export function AIChatWidget() {
       <button
         onMouseDown={handleMouseDown}
         className={cn(
-          "fixed z-50 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 select-none",
+          "fixed z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 select-none",
           open ? "opacity-0 pointer-events-none scale-75" : "opacity-100 scale-100",
           dragging ? "cursor-grabbing shadow-xl scale-105" : "cursor-grab hover:shadow-xl hover:scale-105",
           "bg-brand-500 text-white dark:bg-brand-600"
         )}
         style={{ left: pos.x, top: pos.y, transition: dragging ? "none" : undefined }}
       >
-        <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
+        <Sparkles className="h-6 w-6" />
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:bottom-6 sm:right-6 sm:inset-auto">
-          {/* Mobile backdrop */}
-          <div className="absolute inset-0 bg-black/20 sm:hidden" onClick={() => setOpen(false)} />
-          <div className="relative flex h-[85vh] sm:h-[560px] w-full sm:w-[420px] flex-col rounded-t-2xl sm:rounded-2xl border border-surface-200 bg-white shadow-2xl dark:border-surface-700 dark:bg-surface-900">
+        <div className="fixed bottom-6 right-6 z-50 flex h-[560px] w-[420px] flex-col rounded-2xl border border-surface-200 bg-white shadow-2xl dark:border-surface-700 dark:bg-surface-900">
             {/* Header */}
-            <div className="shrink-0 border-b border-surface-200 px-3 sm:px-4 py-3 dark:border-surface-700">
+            <div className="shrink-0 border-b border-surface-200 px-4 py-3 dark:border-surface-700">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900">
-                    <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brand-600 dark:text-brand-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900">
+                    <Bot className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100">麦斯助手</h3>
                     <p className="text-[10px] text-surface-500">DeepSeek · {currentPersonality.label}模式</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="h-7 w-7 sm:h-8 sm:w-8">
-                  <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="h-8 w-8">
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
 
@@ -366,11 +363,11 @@ export function AIChatWidget() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4">
+            <div className="flex-1 overflow-y-auto px-4 py-4">
               {messages.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center text-center px-4">
-                  <div className="mb-3 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950">
-                    <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-brand-500" />
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950">
+                    <Sparkles className="h-6 w-6 text-brand-500" />
                   </div>
                   <p className="text-sm font-medium text-surface-700 dark:text-surface-300">你好，我是麦斯助手</p>
                   <p className="mt-1 text-xs text-surface-500">我可以帮你写作、编辑、头脑风暴。试试说「帮我写一篇...」</p>
@@ -380,7 +377,7 @@ export function AIChatWidget() {
                   {messages.map((msg, i) => (
                     <div key={i} className={cn("mb-3 flex", msg.role === "user" ? "justify-end" : "justify-start")}>
                       <div className={cn(
-                        "max-w-[85%] rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+                        "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
                         msg.role === "user"
                           ? "bg-brand-500 text-white rounded-br-md"
                           : "bg-surface-100 text-surface-800 rounded-bl-md dark:bg-surface-800 dark:text-surface-200"
@@ -407,7 +404,7 @@ export function AIChatWidget() {
                   onKeyDown={handleKeyDown}
                   placeholder="输入消息..."
                   disabled={loading}
-                  className="flex-1 rounded-xl border border-surface-200 bg-surface-50 px-3 sm:px-4 py-2 text-sm text-surface-900 outline-none transition-colors focus:border-brand-300 focus:ring-1 focus:ring-brand-300 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100 dark:focus:border-brand-700"
+                  className="flex-1 rounded-xl border border-surface-200 bg-surface-50 px-4 py-2 text-sm text-surface-900 outline-none transition-colors focus:border-brand-300 focus:ring-1 focus:ring-brand-300 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100 dark:focus:border-brand-700"
                 />
                 {streaming ? (
                   <Button size="icon" onClick={handleStop} className="h-9 w-9 shrink-0 rounded-xl bg-red-500 hover:bg-red-600">
@@ -421,7 +418,6 @@ export function AIChatWidget() {
               </div>
             </div>
           </div>
-        </div>
       )}
     </>
   );

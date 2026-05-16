@@ -44,7 +44,7 @@ export function FavoritesPage({ onOpenDoc }: FavoritesPageProps) {
 
   return (
     <div className="flex-1 overflow-y-auto bg-surface-50 dark:bg-surface-950">
-      <div className="mx-auto max-w-[1200px] px-4 sm:px-8 lg:px-20 py-8 sm:py-12 lg:py-20">
+      <div className="mx-auto max-w-[1200px] px-20 py-20">
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-3">
             <Star className="h-6 w-6 text-amber-500" fill="currentColor" />
@@ -58,7 +58,7 @@ export function FavoritesPage({ onOpenDoc }: FavoritesPageProps) {
         </div>
 
         {favorites.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             {favorites.map((doc) => (
               <DocumentCard
                 key={doc.id}

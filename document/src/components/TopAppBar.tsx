@@ -60,7 +60,7 @@ export function TopAppBar({
     : "?";
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-surface-200 bg-white px-3 sm:px-6 dark:border-surface-800 dark:bg-surface-950">
+    <header className="flex h-14 items-center justify-between border-b border-surface-200 bg-white px-6 dark:border-surface-800 dark:bg-surface-950">
       {/* Left: Sidebar Toggle only */}
       <div className="flex items-center gap-3">
         <Button
@@ -84,11 +84,11 @@ export function TopAppBar({
           <>
             <Button variant="ghost" size="sm" className="gap-1.5 text-surface-600 hover:text-surface-900 dark:text-surface-300 dark:hover:text-surface-100" onClick={onShare}>
               <Share2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline text-xs">{t("topbar.share")}</span>
+              <span className="text-xs">{t("topbar.share")}</span>
             </Button>
             <Button variant="ghost" size="sm" className="gap-1.5 text-surface-600 hover:text-surface-900 dark:text-surface-300 dark:hover:text-surface-100" onClick={onExport}>
               <Download className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline text-xs">{t("topbar.export")}</span>
+              <span className="text-xs">{t("topbar.export")}</span>
             </Button>
           </>
         )}
@@ -108,7 +108,7 @@ export function TopAppBar({
                   {initials}
                 </div>
               )}
-              <span className="hidden sm:inline max-w-[80px] truncate text-sm font-medium text-surface-700 dark:text-surface-200">
+              <span className="max-w-[80px] truncate text-sm font-medium text-surface-700 dark:text-surface-200">
                 {user?.name || "User"}
               </span>
               <ChevronDown className="h-3.5 w-3.5 text-surface-400" />
