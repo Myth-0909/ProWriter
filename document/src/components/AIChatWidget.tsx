@@ -137,9 +137,22 @@ export function AIChatWidget() {
   const hasMoved = useRef(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Position recalculation on resize
   useEffect(() => {
-    setPos({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
-  }, []);
+    const updatePos = () => {
+      setPos((prev) => ({
+        x: Math.min(prev.x, window.innerWidth - 60),
+        y: Math.min(prev.y, window.innerHeight - 60),
+      }));
+    };
+    updatePos();
+    // Initial position if not set yet
+    if (pos.x === 0 && pos.y === 0) {
+      setPos({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
+    }
+    window.addEventListener("resize", updatePos);
+    return () => window.removeEventListener("resize", updatePos);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Greet on open, re-greet on personality change
   useEffect(() => {

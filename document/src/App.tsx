@@ -26,7 +26,9 @@ type Page = "editor" | "documents" | "favorites" | "share" | "login" | "trash" |
 function EditorPageContent({ activeDocId, setActiveDocId }: { activeDocId: string; setActiveDocId: (id: string) => void }) {
   return (
     <>
-      <DocumentList activeId={activeDocId} onSelect={setActiveDocId} />
+      <div className="hidden lg:block shrink-0">
+        <DocumentList activeId={activeDocId} onSelect={setActiveDocId} />
+      </div>
       <div className="flex-1">
         <Editor documentId={activeDocId} />
       </div>
@@ -144,10 +146,19 @@ export default function App() {
         />
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar: on mobile, hidden when collapsed, overlay when expanded */}
-          {!sidebarCollapsed && <div className="fixed inset-0 z-20 bg-black/30 sm:hidden" onClick={() => setSidebarCollapsed(true)} />}
-          <div className={cn("shrink-0 z-30", sidebarCollapsed ? "hidden sm:flex" : "flex")}>
-            <SideNavBar activeNav={activeNav} onNavChange={(id) => { handleNavChange(id); setSidebarCollapsed(true); }} collapsed={sidebarCollapsed} />
+          {/* Sidebar: overlay on mobile, persistent on desktop */}
+          {!sidebarCollapsed && (
+            <div className="fixed inset-0 z-20 bg-black/30 lg:hidden" onClick={() => setSidebarCollapsed(true)} />
+          )}
+          <div
+            className={cn(
+              "z-30 transition-all duration-300",
+              sidebarCollapsed
+                ? "hidden lg:block"                        // hidden on mobile/tablet, shown collapsed on desktop
+                : "fixed inset-y-0 left-0 lg:relative"     // overlay on mobile/tablet, inline on desktop
+            )}
+          >
+            <SideNavBar activeNav={activeNav} onNavChange={handleNavChange} collapsed={sidebarCollapsed} />
           </div>
 
           <PageTransition pageKey={currentPage}>

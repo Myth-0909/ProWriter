@@ -7,6 +7,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ShinyText } from "@/components/ShinyText";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useTheme } from "@/components/ThemeProvider";
 import { useI18n } from "@/components/I18nProvider";
 
@@ -31,9 +32,46 @@ interface SideNavBarProps {
   collapsed?: boolean;
 }
 
+function NavButton({ item, isActive, collapsed, onClick }: {
+  item: NavItem;
+  isActive: boolean;
+  collapsed: boolean;
+  onClick: () => void;
+}) {
+  const { t } = useI18n();
+  const label = t(item.labelKey);
+
+  const button = (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 rounded-md text-sm font-medium cursor-pointer transition-all",
+        collapsed
+          ? "justify-center w-10 h-10 mx-auto"
+          : "w-full px-3 py-2",
+        isActive
+          ? "bg-surface-200 text-surface-900 dark:bg-surface-800 dark:text-surface-100"
+          : "text-surface-600 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-200"
+      )}
+    >
+      <item.icon className="h-[18px] w-[18px] shrink-0" />
+      {!collapsed && <span>{label}</span>}
+    </button>
+  );
+
+  if (collapsed) {
+    return (
+      <Tooltip content={<span>{label}</span>}>
+        {button}
+      </Tooltip>
+    );
+  }
+
+  return button;
+}
+
 export function SideNavBar({ activeNav, onNavChange, collapsed = false }: SideNavBarProps) {
   const { theme } = useTheme();
-  const { t } = useI18n();
 
   return (
     <aside
@@ -70,28 +108,17 @@ export function SideNavBar({ activeNav, onNavChange, collapsed = false }: SideNa
             const isActive = item.id === activeNav;
             return (
               <li key={item.id}>
-                <button
+                <NavButton
+                  item={item}
+                  isActive={isActive}
+                  collapsed={collapsed}
                   onClick={() => onNavChange(item.id)}
-                  title={collapsed ? t(item.labelKey) : undefined}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md text-sm font-medium cursor-pointer transition-all",
-                    collapsed
-                      ? "justify-center w-10 h-10 mx-auto"
-                      : "w-full px-3 py-2",
-                    isActive
-                      ? "bg-surface-200 text-surface-900 dark:bg-surface-800 dark:text-surface-100"
-                      : "text-surface-600 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-200"
-                  )}
-                >
-                  <item.icon className="h-[18px] w-[18px] shrink-0" />
-                  {!collapsed && <span>{t(item.labelKey)}</span>}
-                </button>
+                />
               </li>
             );
           })}
         </ul>
       </nav>
-
     </aside>
   );
 }
