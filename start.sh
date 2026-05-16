@@ -1,18 +1,17 @@
 #!/bin/bash
 
-# MythWriter 一键启动脚本 - 同时启动前端和后端
+# MythWriter 一键启动脚本 - 同时启动后端和桌面端
 
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FRONTEND_DIR="$ROOT_DIR/document"
 BACKEND_DIR="$ROOT_DIR/server"
-FRONTEND_PORT=1420
 BACKEND_PORT=3000
 
 cleanup() {
   echo ""
   echo "正在停止所有服务..."
-  kill $BACKEND_PID $FRONTEND_PID 2>/dev/null
-  wait $BACKEND_PID $FRONTEND_PID 2>/dev/null
+  kill $BACKEND_PID $TAURI_PID 2>/dev/null
+  wait $BACKEND_PID $TAURI_PID 2>/dev/null
   echo "服务已停止"
   exit 0
 }
@@ -47,21 +46,19 @@ echo "==============================="
 
 # 释放端口
 kill_port $BACKEND_PORT
-kill_port $FRONTEND_PORT
 
 # 启动后端
 echo "[后端] 启动 API 服务 (port $BACKEND_PORT)..."
 cd "$BACKEND_DIR" && npm run dev &
 BACKEND_PID=$!
 
-# 启动前端
-echo "[前端] 启动 Vite 开发服务器..."
-cd "$FRONTEND_DIR" && pnpm dev &
-FRONTEND_PID=$!
+# 启动 Tauri 桌面端
+echo "[桌面端] 启动 Tauri 应用..."
+cd "$FRONTEND_DIR" && pnpm tauri dev &
+TAURI_PID=$!
 
 echo ""
-echo "前端: http://localhost:$FRONTEND_PORT"
-echo "后端: http://localhost:$BACKEND_PORT"
+echo "后端 API: http://localhost:$BACKEND_PORT"
 echo "后端健康检查: http://localhost:$BACKEND_PORT/api/health"
 echo ""
 echo "按 Ctrl+C 停止所有服务"
