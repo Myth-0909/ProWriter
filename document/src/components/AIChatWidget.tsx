@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Bot, X, Send, Sparkles, Smile, ChevronDown } from "lucide-react";
+import { Bot, X, Send, Sparkles, Smile, ChevronDown, ThumbsUp, ThumbsDown, Star, Trash2 } from "lucide-react";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { useToast } from "@/components/Toast";
 import { useDocuments } from "@/store";
 import { useAuth } from "@/auth";
@@ -143,7 +144,21 @@ export function AIChatWidget() {
   const [personalityOpen, setPersonalityOpen] = useState(false);
   const memoryRef = useRef<Message[]>(loadMemory());
   const abortRef = useRef<AbortController | null>(null);
-  const thinkingMsgRef = useRef<Message | null>(null);
+  const [feedbackMsgIdx, setFeedbackMsgIdx] = useState<number | null>(null);
+  const [showRating, setShowRating] = useState(false);
+  const [showDislikeOpts, setShowDislikeOpts] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Save conversation to DB
+  const saveConversation = useCallback(async () => {
+    if (messages.length === 0 || saving) return;
+    setSaving(true);
+    try {
+      await api.saveConversation({ messages, personality: personalityRef.current });
+    } catch { /* silent */ }
+    setSaving(false);
+  }, [messages, saving]);
 
   // Drag
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -322,7 +337,6 @@ export function AIChatWidget() {
     } finally {
       setLoading(false);
       setStreaming(false);
-      thinkingMsgRef.current = null;
     }
   }, [input, loading, streaming, messages, createDocument, toast]);
 
@@ -372,9 +386,14 @@ export function AIChatWidget() {
                   <p className="text-[10px] text-surface-500">DeepSeek · {currentPersonality.label}模式</p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="h-8 w-8">
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(true)} className="h-8 w-8" title="清除历史记录">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => { saveConversation(); setOpen(false); }} className="h-8 w-8">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Personality selector */}
@@ -456,6 +475,61 @@ export function AIChatWidget() {
                           <span className="inline-block w-1.5 h-4 ml-0.5 bg-brand-500 animate-pulse rounded-sm align-middle" />
                         )}
                       </div>
+                      {/* Feedback buttons for assistant messages */}
+                      {!isUser && !streaming && msg.content && (
+                        <div className="flex items-center gap-1 mt-1 ml-1">
+                          <button
+                            onClick={() => { setFeedbackMsgIdx(i); setShowRating(true); setShowDislikeOpts(false); }}
+                            className="p-0.5 rounded text-surface-300 hover:text-amber-500 hover:bg-surface-100 transition-colors"
+                            title="点赞"
+                          >
+                            <ThumbsUp className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => { setFeedbackMsgIdx(i); setShowDislikeOpts(true); setShowRating(false); }}
+                            className="p-0.5 rounded text-surface-300 hover:text-red-500 hover:bg-surface-100 transition-colors"
+                            title="点踩"
+                          >
+                            <ThumbsDown className="h-3 w-3" />
+                          </button>
+                          {/* Star rating popover */}
+                          {showRating && feedbackMsgIdx === i && (
+                            <div className="flex items-center gap-0.5 bg-white border border-surface-200 rounded-lg px-1.5 py-1 shadow-sm dark:bg-surface-800 dark:border-surface-700">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                  key={star}
+                                  onClick={async () => {
+                                    await api.sendFeedback({ messageContent: msg.content, feedbackType: "like", rating: star });
+                                    toast("感谢反馈！", "success");
+                                    setShowRating(false); setFeedbackMsgIdx(null);
+                                  }}
+                                  className="p-0.5 transition-colors hover:text-amber-500"
+                                >
+                                  <Star className="h-3.5 w-3.5 text-amber-400" fill="currentColor" />
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {/* Dislike options popover */}
+                          {showDislikeOpts && feedbackMsgIdx === i && (
+                            <div className="flex flex-wrap gap-1 bg-white border border-surface-200 rounded-lg px-2 py-1.5 shadow-sm dark:bg-surface-800 dark:border-surface-700">
+                              {["回复不准确", "不符合预期", "内容不完整", "语气不当", "其他"].map((reason) => (
+                                <button
+                                  key={reason}
+                                  onClick={async () => {
+                                    await api.sendFeedback({ messageContent: msg.content, feedbackType: "dislike", reason });
+                                    toast("感谢反馈！", "success");
+                                    setShowDislikeOpts(false); setFeedbackMsgIdx(null);
+                                  }}
+                                  className="text-[10px] px-2 py-0.5 rounded-full border border-surface-200 text-surface-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors dark:border-surface-700 dark:hover:bg-red-950"
+                                >
+                                  {reason}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -505,6 +579,29 @@ export function AIChatWidget() {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation */}
+      <ConfirmModal
+        open={deleteConfirm}
+        onOpenChange={setDeleteConfirm}
+        title="清除历史记录"
+        description="确定要清除所有对话记录吗？此操作不可撤销。"
+        confirmLabel="确定清除"
+        cancelLabel="取消"
+        variant="danger"
+        onConfirm={async () => {
+          try {
+            await api.deleteConversations();
+            setMessages([]);
+            memoryRef.current = [];
+            localStorage.removeItem(MEMORY_KEY);
+            toast("历史记录已清除", "success");
+          } catch {
+            toast("清除失败", "error");
+          }
+          setDeleteConfirm(false);
+        }}
+      />
     </>
   );
 }

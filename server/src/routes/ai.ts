@@ -1,4 +1,6 @@
 import { Router, Request, Response } from "express";
+import prisma from "../lib/prisma";
+import { AuthRequest, authMiddleware } from "../middleware/auth";
 
 const router = Router();
 
@@ -286,6 +288,89 @@ router.post("/chat", async (req: Request, res: Response) => {
       res.write(`data: ${JSON.stringify({ error: "Stream error" })}\n\n`);
       res.end();
     }
+  }
+});
+
+// --- Conversation CRUD (authenticated) ---
+router.use(authMiddleware);
+
+// Get user's conversations
+router.get("/conversations", async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const conversations = await prisma.conversation.findMany({
+      where: { userId: authReq.userId },
+      orderBy: { updatedAt: "desc" },
+      take: 10,
+    });
+    res.json({ conversations });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Save conversation
+router.post("/conversations", async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { messages, personality } = req.body;
+    if (!messages) {
+      res.status(400).json({ error: "messages is required" });
+      return;
+    }
+
+    // Use first user message as title
+    const firstUserMsg = (messages as any[]).find((m: any) => m.role === "user");
+    const title = firstUserMsg?.content?.slice(0, 50) || "New conversation";
+
+    const conversation = await prisma.conversation.create({
+      data: {
+        userId: authReq.userId,
+        messages: messages,
+        personality: personality || "normal",
+      },
+    });
+    res.json({ conversation });
+  } catch (error) {
+    console.error("Save conversation error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Delete user's conversations
+router.delete("/conversations", async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    await prisma.conversation.deleteMany({
+      where: { userId: authReq.userId },
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// --- Feedback (authenticated) ---
+router.post("/feedback", async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { messageContent, feedbackType, rating, reason } = req.body;
+    if (!messageContent || !feedbackType) {
+      res.status(400).json({ error: "messageContent and feedbackType are required" });
+      return;
+    }
+    const feedback = await prisma.chatFeedback.create({
+      data: {
+        userId: authReq.userId,
+        messageContent,
+        feedbackType,
+        rating: feedbackType === "like" ? rating || null : null,
+        reason: feedbackType === "dislike" ? reason || null : null,
+      },
+    });
+    res.json({ feedback });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

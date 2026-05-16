@@ -123,4 +123,24 @@ export const api = {
     request<{ reply: string; action: { type: string; title: string; content: string } | null }>(
       "/ai/chat", { method: "POST", body: JSON.stringify(data) }
     ),
+
+  getConversations: () =>
+    request<{ conversations: { id: string; messages: any[]; personality: string; createdAt: string }[] }>(
+      "/ai/conversations"
+    ),
+
+  saveConversation: (data: { messages: { role: string; content: string }[]; personality: string }) =>
+    request<{ conversation: { id: string } }>(
+      "/ai/conversations", { method: "POST", body: JSON.stringify(data) }
+    ),
+
+  deleteConversations: () =>
+    request<{ success: boolean }>(
+      "/ai/conversations", { method: "DELETE" }
+    ),
+
+  sendFeedback: (data: { messageContent: string; feedbackType: string; rating?: number; reason?: string }) =>
+    request<{ feedback: { id: string } }>(
+      "/ai/feedback", { method: "POST", body: JSON.stringify(data) }
+    ),
 };
