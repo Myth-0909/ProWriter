@@ -68,8 +68,13 @@ async function streamChat(
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Network error" }));
-    throw new Error(err.error || `HTTP ${res.status}`);
+    // If the server returned JSON (non-streaming), parse it
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      const err = await res.json();
+      throw new Error(err.error || err.reply || `HTTP ${res.status}`);
+    }
+    throw new Error(`HTTP ${res.status}`);
   }
 
   const reader = res.body?.getReader();
@@ -93,15 +98,11 @@ async function streamChat(
       if (!trimmed || !trimmed.startsWith("data: ")) continue;
       try {
         const parsed = JSON.parse(trimmed.slice(6));
-        if (parsed.delta) {
-          onDelta(parsed.delta);
-        }
+        if (parsed.error) throw new Error(parsed.error);
+        if (parsed.delta) onDelta(parsed.delta);
         if (parsed.done) {
           finalReply = parsed.reply;
           finalAction = parsed.action;
-        }
-        if (parsed.error) {
-          throw new Error(parsed.error);
         }
       } catch (e: any) {
         if (e.message && !e.message.includes("JSON")) throw e;
@@ -128,7 +129,7 @@ export function AIChatWidget() {
   const [personalityOpen, setPersonalityOpen] = useState(false);
   const memoryRef = useRef<Message[]>(loadMemory());
   const abortRef = useRef<AbortController | null>(null);
-  const streamContentRef = useRef("");
+  const thinkingMsgRef = useRef<Message | null>(null);
 
   // Drag
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -138,7 +139,17 @@ export function AIChatWidget() {
   const hasMoved = useRef(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Position recalculation on resize
+  // User avatar
+  const avatarUrl = user?.avatar ? `http://localhost:3000/uploads/${user.avatar}` : null;
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
+
+  useEffect(() => {
+    setPos({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
+  }, []);
+
+  // Resize handler
   useEffect(() => {
     const updatePos = () => {
       setPos((prev) => ({
@@ -146,14 +157,9 @@ export function AIChatWidget() {
         y: Math.min(prev.y, window.innerHeight - 60),
       }));
     };
-    updatePos();
-    // Initial position if not set yet
-    if (pos.x === 0 && pos.y === 0) {
-      setPos({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
-    }
     window.addEventListener("resize", updatePos);
     return () => window.removeEventListener("resize", updatePos);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Greet on open, re-greet on personality change
   useEffect(() => {
@@ -169,7 +175,6 @@ export function AIChatWidget() {
         saveMemory(memoryRef.current);
       })
       .catch(() => {
-        // Fallback greetings by personality
         const fallbacks: Record<Personality, string> = {
           normal: `${user?.name || '用户'} 您好！我是小麦，很高兴见到您！`,
           cute: `${user?.name || '用户'} 您好呀~ 我是小麦呢 💕 一起开心地写作吧！🌸✨`,
@@ -184,9 +189,8 @@ export function AIChatWidget() {
   // Auto-scroll
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streaming]);
+  }, [messages]);
 
-  // Persist personality — sync ref immediately (before re-render effects)
   const changePersonality = useCallback((p: Personality) => {
     personalityRef.current = p;
     setPersonality(p);
@@ -221,51 +225,59 @@ export function AIChatWidget() {
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if (!text || loading || streaming) return;
 
     const userMsg: Message = { role: "user", content: text };
-    const updatedMessages = [...messages, userMsg];
-    setMessages(updatedMessages);
+    const withUser = [...messages, userMsg];
+    setMessages(withUser);
     setInput("");
     setLoading(true);
-    // Don't set streaming yet — thinking indicator shows until first delta
-    streamContentRef.current = "";
 
     const memory = [...memoryRef.current, userMsg];
     memoryRef.current = memory;
-
-    // Add a placeholder for the assistant response
-    const placeholderIdx = updatedMessages.length;
-    setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
     const abort = new AbortController();
     abortRef.current = abort;
 
     try {
       const memoryContext = buildMemoryContext(memory);
+      let fullContent = "";
       let firstDelta = true;
+
       const { reply, action } = await streamChat(
-        { messages: updatedMessages, personality: personalityRef.current, memoryContext },
+        { messages: withUser, personality: personalityRef.current, memoryContext },
         (delta) => {
+          fullContent += delta;
           if (firstDelta) {
             firstDelta = false;
-            setStreaming(true); // Switch from thinking to streaming
+            setStreaming(true);
+            // Add assistant message on first delta
+            setMessages((prev) => [...prev, { role: "assistant", content: delta }]);
+          } else {
+            // Update last assistant message
+            setMessages((prev) => {
+              const next = [...prev];
+              const last = next[next.length - 1];
+              if (last && last.role === "assistant") {
+                next[next.length - 1] = { ...last, content: fullContent };
+              }
+              return next;
+            });
           }
-          streamContentRef.current += delta;
-          setMessages((prev) => {
-            const next = [...prev];
-            next[placeholderIdx] = { role: "assistant", content: streamContentRef.current };
-            return next;
-          });
         },
         abort.signal
       );
 
-      // Replace streaming placeholder with final parsed reply
-      const finalContent = reply || streamContentRef.current;
+      // Finalize with parsed reply
+      const finalContent = reply || fullContent;
       setMessages((prev) => {
         const next = [...prev];
-        next[placeholderIdx] = { role: "assistant", content: finalContent };
+        const last = next[next.length - 1];
+        if (last && last.role === "assistant") {
+          next[next.length - 1] = { ...last, content: finalContent };
+        } else if (finalContent) {
+          next.push({ role: "assistant", content: finalContent });
+        }
         return next;
       });
 
@@ -282,16 +294,23 @@ export function AIChatWidget() {
       }
     } catch (error: any) {
       if (error.name === "AbortError") return;
+      // Remove thinking indicator and show error
       setMessages((prev) => {
         const next = [...prev];
-        next[placeholderIdx] = { role: "assistant", content: error.message || "AI service unavailable" };
+        const last = next[next.length - 1];
+        if (last && last.role === "assistant" && !last.content) {
+          next[next.length - 1] = { role: "assistant", content: error.message || "AI 服务不可用" };
+        } else {
+          next.push({ role: "assistant", content: error.message || "AI 服务不可用" });
+        }
         return next;
       });
     } finally {
       setLoading(false);
       setStreaming(false);
+      thinkingMsgRef.current = null;
     }
-  }, [input, loading, messages, personality, createDocument, toast]);
+  }, [input, loading, streaming, messages, createDocument, toast]);
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();
@@ -307,9 +326,11 @@ export function AIChatWidget() {
   };
 
   const currentPersonality = PERSONALITY_OPTIONS.find((p) => p.key === personality) || PERSONALITY_OPTIONS[0];
+  const isGenerating = loading || streaming;
 
   return (
     <>
+      {/* Floating button */}
       <button
         onMouseDown={handleMouseDown}
         className={cn(
@@ -325,127 +346,150 @@ export function AIChatWidget() {
 
       {open && (
         <div className="fixed bottom-6 right-6 z-50 flex h-[560px] w-[420px] flex-col rounded-2xl border border-surface-200 bg-white shadow-2xl dark:border-surface-700 dark:bg-surface-900">
-            {/* Header */}
-            <div className="shrink-0 border-b border-surface-200 px-4 py-3 dark:border-surface-700">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900">
-                    <Bot className="h-4 w-4 text-brand-600 dark:text-brand-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100">小麦</h3>
-                    <p className="text-[10px] text-surface-500">DeepSeek · {currentPersonality.label}模式</p>
-                  </div>
+          {/* Header */}
+          <div className="shrink-0 border-b border-surface-200 px-4 py-3 dark:border-surface-700">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900">
+                  <Bot className="h-4 w-4 text-brand-600 dark:text-brand-400" />
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="h-8 w-8">
-                  <X className="h-4 w-4" />
-                </Button>
+                <div>
+                  <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100">小麦</h3>
+                  <p className="text-[10px] text-surface-500">DeepSeek · {currentPersonality.label}模式</p>
+                </div>
               </div>
-
-              {/* Personality selector */}
-              <div className="relative">
-                <button
-                  onClick={() => setPersonalityOpen(!personalityOpen)}
-                  className="flex items-center gap-1.5 rounded-lg border border-surface-200 bg-surface-50 px-2 py-1 text-xs text-surface-600 hover:bg-surface-100 transition-colors dark:border-surface-700 dark:bg-surface-800 dark:text-surface-400 dark:hover:bg-surface-700"
-                >
-                  <Smile className="h-3 w-3" />
-                  <span>{currentPersonality.emoji} {currentPersonality.label}</span>
-                  <ChevronDown className={cn("h-3 w-3 transition-transform", personalityOpen && "rotate-180")} />
-                </button>
-
-                {personalityOpen && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setPersonalityOpen(false)} />
-                    <div className="absolute left-0 top-full mt-1 z-20 w-36 rounded-lg border border-surface-200 bg-white py-1 shadow-lg dark:border-surface-700 dark:bg-surface-900">
-                      {PERSONALITY_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.key}
-                          onClick={() => changePersonality(opt.key)}
-                          className={cn(
-                            "w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors hover:bg-surface-50 dark:hover:bg-surface-800",
-                            personality === opt.key
-                              ? "text-brand-600 font-medium bg-brand-50 dark:text-brand-400 dark:bg-brand-950"
-                              : "text-surface-600 dark:text-surface-400"
-                          )}
-                        >
-                          <span>{opt.emoji}</span>
-                          <span>{opt.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+              <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="h-8 w-8">
+                <X className="h-4 w-4" />
+              </Button>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4">
-              {messages.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center text-center px-4">
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950">
-                    <Sparkles className="h-6 w-6 text-brand-500" />
-                  </div>
-                  <p className="text-sm font-medium text-surface-700 dark:text-surface-300">你好，我是小麦</p>
-                  <p className="mt-1 text-xs text-surface-500">我可以帮你写作、编辑、头脑风暴。试试说「帮我写一篇...」</p>
-                </div>
-              ) : (
+            {/* Personality selector */}
+            <div className="relative">
+              <button
+                onClick={() => setPersonalityOpen(!personalityOpen)}
+                className="flex items-center gap-1.5 rounded-lg border border-surface-200 bg-surface-50 px-2 py-1 text-xs text-surface-600 hover:bg-surface-100 transition-colors dark:border-surface-700 dark:bg-surface-800 dark:text-surface-400 dark:hover:bg-surface-700"
+              >
+                <Smile className="h-3 w-3" />
+                <span>{currentPersonality.emoji} {currentPersonality.label}</span>
+                <ChevronDown className={cn("h-3 w-3 transition-transform", personalityOpen && "rotate-180")} />
+              </button>
+              {personalityOpen && (
                 <>
-                  {messages.map((msg, i) => (
-                    <div key={i} className={cn("mb-3 flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+                  <div className="fixed inset-0 z-10" onClick={() => setPersonalityOpen(false)} />
+                  <div className="absolute left-0 top-full mt-1 z-20 w-36 rounded-lg border border-surface-200 bg-white py-1 shadow-lg dark:border-surface-700 dark:bg-surface-900">
+                    {PERSONALITY_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.key}
+                        onClick={() => changePersonality(opt.key)}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors hover:bg-surface-50 dark:hover:bg-surface-800",
+                          personality === opt.key
+                            ? "text-brand-600 font-medium bg-brand-50 dark:text-brand-400 dark:bg-brand-950"
+                            : "text-surface-600 dark:text-surface-400"
+                        )}
+                      >
+                        <span>{opt.emoji}</span>
+                        <span>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-4">
+            {messages.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center text-center px-4">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950">
+                  <Sparkles className="h-6 w-6 text-brand-500" />
+                </div>
+                <p className="text-sm font-medium text-surface-700 dark:text-surface-300">你好，我是小麦</p>
+                <p className="mt-1 text-xs text-surface-500">我可以帮你写作、编辑、头脑风暴。试试说「帮我写一篇...」</p>
+              </div>
+            ) : (
+              <>
+                {messages.map((msg, i) => {
+                  const isUser = msg.role === "user";
+                  const isLastAssistant = !isUser && i === messages.length - 1;
+                  return (
+                    <div key={i} className={cn("mb-4 flex gap-2", isUser ? "flex-row-reverse" : "flex-row")}>
+                      {/* Avatar */}
+                      {isUser ? (
+                        avatarUrl ? (
+                          <img src={avatarUrl} alt="me" className="h-7 w-7 shrink-0 rounded-full object-cover mt-0.5" />
+                        ) : (
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-500 text-[10px] font-semibold text-white mt-0.5">
+                            {initials}
+                          </div>
+                        )
+                      ) : (
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900 mt-0.5">
+                          <Bot className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
+                        </div>
+                      )}
+
+                      {/* Message bubble */}
                       <div className={cn(
-                        "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
-                        msg.role === "user"
+                        "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+                        isUser
                           ? "bg-brand-500 text-white rounded-br-md"
                           : "bg-surface-100 text-surface-800 rounded-bl-md dark:bg-surface-800 dark:text-surface-200"
                       )}>
                         {msg.content}
-                        {streaming && i === messages.length - 1 && msg.role === "assistant" && (
+                        {streaming && isLastAssistant && (
                           <span className="inline-block w-1.5 h-4 ml-0.5 bg-brand-500 animate-pulse rounded-sm align-middle" />
                         )}
                       </div>
                     </div>
-                  ))}
-                  {loading && !streaming && (
-                    <div className="mb-3 flex justify-start">
-                      <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-surface-100 px-4 py-3 dark:bg-surface-800">
-                        <span className="flex gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce [animation-delay:0ms]" />
-                          <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce [animation-delay:150ms]" />
-                          <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce [animation-delay:300ms]" />
-                        </span>
-                        <span className="text-xs text-surface-500">小麦正在思考...</span>
-                      </div>
+                  );
+                })}
+                {/* Thinking indicator */}
+                {loading && !streaming && (
+                  <div className="mb-4 flex gap-2">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900 mt-0.5">
+                      <Bot className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400" />
                     </div>
-                  )}
-                </>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Input */}
-            <div className="shrink-0 border-t border-surface-200 px-3 py-3 dark:border-surface-700">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="输入消息..."
-                  disabled={loading}
-                  className="flex-1 rounded-xl border border-surface-200 bg-surface-50 px-4 py-2 text-sm text-surface-900 outline-none transition-colors focus:border-brand-300 focus:ring-1 focus:ring-brand-300 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100 dark:focus:border-brand-700"
-                />
-                {streaming ? (
-                  <Button size="icon" onClick={handleStop} className="h-9 w-9 shrink-0 rounded-xl bg-red-500 hover:bg-red-600">
-                    <div className="h-3 w-3 rounded-sm bg-white" />
-                  </Button>
-                ) : (
-                  <Button size="icon" onClick={handleSend} disabled={loading || !input.trim()} className="h-9 w-9 shrink-0 rounded-xl">
-                    <Send className="h-4 w-4" />
-                  </Button>
+                    <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-surface-100 px-4 py-3 dark:bg-surface-800">
+                      <span className="flex gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </span>
+                      <span className="text-xs text-surface-500">小麦正在思考...</span>
+                    </div>
+                  </div>
                 )}
-              </div>
+              </>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="shrink-0 border-t border-surface-200 px-3 py-3 dark:border-surface-700">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isGenerating ? "小麦正在回复中..." : "输入消息..."}
+                disabled={isGenerating}
+                className="flex-1 rounded-xl border border-surface-200 bg-surface-50 px-4 py-2 text-sm text-surface-900 outline-none transition-colors focus:border-brand-300 focus:ring-1 focus:ring-brand-300 disabled:opacity-50 disabled:cursor-not-allowed dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100 dark:focus:border-brand-700"
+              />
+              {streaming ? (
+                <Button size="icon" onClick={handleStop} className="h-9 w-9 shrink-0 rounded-xl bg-red-500 hover:bg-red-600">
+                  <div className="h-3 w-3 rounded-sm bg-white" />
+                </Button>
+              ) : (
+                <Button size="icon" onClick={handleSend} disabled={isGenerating || !input.trim()} className="h-9 w-9 shrink-0 rounded-xl">
+                  <Send className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
+        </div>
       )}
     </>
   );
