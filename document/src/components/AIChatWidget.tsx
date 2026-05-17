@@ -213,6 +213,15 @@ export function AIChatWidget() {
       restoredRef.current = false;
       return;
     }
+    // Check API key configured
+    api.getApiKey().then((res) => {
+      if (!res.hasKey) {
+        toast("请先在设置中配置 API Key 后再使用对话助手", "error");
+        setOpen(false);
+        return;
+      }
+    }).catch(() => {});
+
     // Log open
     api.logActivity({ action: "chat_open", detail: personalityRef.current }).catch(() => {});
 

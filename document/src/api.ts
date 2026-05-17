@@ -148,4 +148,14 @@ export const api = {
     request<{ success: boolean }>(
       "/ai/log", { method: "POST", body: JSON.stringify(data) }
     ),
+
+  getApiKey: () =>
+    request<{ hasKey: boolean; masked: string }>(
+      "/users/me/apikey"
+    ),
+
+  saveApiKey: (apiKey: string) =>
+    request<{ success: boolean }>(
+      "/users/me/apikey", { method: "PUT", body: JSON.stringify({ apiKey }) }
+    ),
 };

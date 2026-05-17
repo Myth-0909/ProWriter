@@ -156,4 +156,39 @@ router.post("/avatar", async (req: AuthRequest, res: Response) => {
   }
 });
 
+// GET /api/users/me/apikey - Get API key (masked)
+router.get("/me/apikey", async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { apiKey: true },
+    });
+    const key = user?.apiKey || "";
+    const masked = key
+      ? key.slice(0, 3) + "****" + key.slice(-4)
+      : "";
+    res.json({ hasKey: !!key, masked });
+  } catch (error) {
+    res.status(500).json({ error: "获取API Key失败" });
+  }
+});
+
+// PUT /api/users/me/apikey - Save API key
+router.put("/me/apikey", async (req: AuthRequest, res: Response) => {
+  try {
+    const { apiKey } = req.body;
+    if (!apiKey || !apiKey.trim()) {
+      res.status(400).json({ error: "API Key不能为空" });
+      return;
+    }
+    await prisma.user.update({
+      where: { id: req.user!.userId },
+      data: { apiKey: apiKey.trim() },
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "保存API Key失败" });
+  }
+});
+
 export default router;

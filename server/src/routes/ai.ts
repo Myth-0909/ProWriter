@@ -3,9 +3,18 @@ import prisma from "../lib/prisma";
 import { AuthRequest, authMiddleware } from "../middleware/auth";
 
 const router = Router();
-
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "";
 const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
+
+// All AI routes require auth
+router.use(authMiddleware);
+
+async function getUserApiKey(req: AuthRequest): Promise<string | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: { apiKey: true },
+  });
+  return user?.apiKey || null;
+}
 
 type Personality = "normal" | "cute" | "catgirl" | "serious" | "silly";
 
@@ -186,8 +195,9 @@ router.post("/chat", async (req: Request, res: Response) => {
       }
     }
 
-    if (!DEEPSEEK_API_KEY) {
-      res.status(500).json({ error: "API key not configured" });
+    const apiKey = await getUserApiKey(req as AuthRequest);
+    if (!apiKey) {
+      res.status(400).json({ error: "请先在设置中配置 API Key" });
       return;
     }
 
@@ -199,7 +209,7 @@ router.post("/chat", async (req: Request, res: Response) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: "deepseek-chat",
@@ -291,8 +301,7 @@ router.post("/chat", async (req: Request, res: Response) => {
   }
 });
 
-// --- Conversation CRUD (authenticated) ---
-router.use(authMiddleware);
+// --- Conversation CRUD ---
 
 // Get user's conversations
 router.get("/conversations", async (req: Request, res: Response) => {
