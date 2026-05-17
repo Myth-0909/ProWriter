@@ -11,15 +11,19 @@ export function Scrollbar({ className, children, options, ...props }: ScrollbarP
   const { theme } = useTheme();
   const themeName = theme === "dark" ? "os-theme-mythwriter-dark" : "os-theme-mythwriter-light";
 
+  const callerScrollbars = (options && typeof options === "object" && "scrollbars" in options)
+    ? (options as any).scrollbars : {};
+
   const mergedOptions: OverlayScrollbarsComponentProps["options"] = {
+    ...(options && typeof options === "object" ? options : {}),
     scrollbars: {
       theme: themeName,
       autoHide: "leave",
       autoHideDelay: 800,
       dragScroll: true,
       clickScroll: true,
+      ...callerScrollbars,
     },
-    ...options,
   };
 
   return (
