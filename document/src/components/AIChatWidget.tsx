@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Bot, X, Send, Sparkles, Smile, ChevronDown, ThumbsUp, ThumbsDown, Star, Trash2, Check, Pencil } from "lucide-react";
+import { Bot, X, Send, Sparkles, Smile, ChevronDown, ThumbsUp, ThumbsDown, Star, Trash2, Check, Pencil, Mic, MicOff } from "lucide-react";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { Scrollbar } from "@/components/ui/scrollbar";
 import { useI18n } from "@/components/I18nProvider";
@@ -160,6 +160,8 @@ export function AIChatWidget() {
   const [deleteMsgConfirm, setDeleteMsgConfirm] = useState(false);
   const feedbackDoneRef = useRef<Set<number>>(new Set());
   const restoredRef = useRef(false);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   // Save conversation to DB
   const saveConversation = useCallback(async () => {
@@ -394,6 +396,32 @@ export function AIChatWidget() {
     setStreaming(false);
   }, []);
 
+  const toggleVoice = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast(t("ai.voiceNotSupported"), "error");
+      return;
+    }
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "zh-CN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInput((prev) => prev + transcript);
+    };
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setListening(true);
+  }, [listening, toast]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -421,7 +449,7 @@ export function AIChatWidget() {
       </button>
 
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 flex h-[560px] w-[420px] flex-col rounded-2xl border border-surface-200 bg-white shadow-2xl dark:border-surface-700 dark:bg-surface-900">
+        <div className="fixed bottom-6 right-6 z-50 flex h-[640px] w-[480px] flex-col rounded-2xl border border-surface-200 bg-white shadow-2xl dark:border-surface-700 dark:bg-surface-900">
           {/* Header */}
           <div className="shrink-0 border-b border-surface-200 px-4 py-3 dark:border-surface-700">
             <div className="flex items-center justify-between mb-2">
@@ -534,101 +562,105 @@ export function AIChatWidget() {
 
                       {/* Message bubble */}
                       <div className={cn(
-                        "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
+                        "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap relative",
                         isUser
                           ? "bg-brand-500 text-white rounded-br-md"
-                          : "bg-surface-100 text-surface-800 rounded-bl-md dark:bg-surface-800 dark:text-surface-200"
+                          : "bg-surface-100 text-surface-800 rounded-bl-md dark:bg-surface-800 dark:text-surface-200 group"
                       )}>
                         {msg.content}
                         {streaming && isLastAssistant && (
                           <span className="inline-block w-1.5 h-4 ml-0.5 bg-brand-500 animate-pulse rounded-sm align-middle" />
                         )}
+                        {/* Feedback buttons: centered vertically, appear on hover */}
+                        {!isUser && !streaming && msg.content && !feedbackDoneRef.current.has(i) && (
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full pl-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col gap-0.5">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (showRating && feedbackMsgIdx === i) {
+                                  setClosingRating(true);
+                                  setTimeout(() => { setShowRating(false); setFeedbackMsgIdx(null); setClosingRating(false); }, 180);
+                                } else {
+                                  setFeedbackMsgIdx(i); setShowRating(true); setShowDislikeOpts(false);
+                                }
+                              }}
+                              className="p-0.5 rounded text-surface-300 hover:text-amber-500 hover:bg-surface-100 transition-colors"
+                              title={t("ai.like")}
+                            >
+                              <ThumbsUp className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (showDislikeOpts && feedbackMsgIdx === i) {
+                                  setClosingDislike(true);
+                                  setTimeout(() => { setShowDislikeOpts(false); setFeedbackMsgIdx(null); setClosingDislike(false); }, 180);
+                                } else {
+                                  setFeedbackMsgIdx(i); setShowDislikeOpts(true); setShowRating(false);
+                                }
+                              }}
+                              className="p-0.5 rounded text-surface-300 hover:text-red-500 hover:bg-surface-100 transition-colors"
+                              title={t("ai.dislike")}
+                            >
+                              <ThumbsDown className="h-3 w-3" />
+                            </button>
+                            {/* Star rating popover */}
+                            {showRating && feedbackMsgIdx === i && (
+                              <div className={cn(
+                                "absolute left-full top-0 ml-1 flex items-center gap-0.5 bg-white border border-surface-200 rounded-lg px-1.5 py-1 shadow-sm dark:bg-surface-800 dark:border-surface-700 whitespace-nowrap",
+                                closingRating ? "animate-out fade-out duration-150" : "animate-in fade-in duration-200"
+                              )}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <button
+                                    key={star}
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      await api.sendFeedback({ messageContent: msg.content, feedbackType: "like", rating: star });
+                                      api.logActivity({ action: "chat_feedback", detail: `like:${star}` }).catch(() => {});
+                                      toast(t("ai.feedbackThanks"), "success");
+                                      feedbackDoneRef.current.add(i);
+                                      setShowRating(false); setFeedbackMsgIdx(null);
+                                    }}
+                                    onMouseEnter={() => setHoverStar(star)}
+                                    onMouseLeave={() => setHoverStar(0)}
+                                    className="p-0.5 transition-transform hover:scale-125"
+                                  >
+                                    <Star
+                                      className="h-3.5 w-3.5 transition-colors"
+                                      fill={hoverStar >= star ? "currentColor" : "none"}
+                                      color={hoverStar >= star ? "#f59e0b" : "#d1d5db"}
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            {/* Dislike options popover */}
+                            {showDislikeOpts && feedbackMsgIdx === i && (
+                              <div className={cn(
+                                "absolute left-full top-0 ml-1 flex flex-col gap-0.5 bg-white border border-surface-200 rounded-lg px-2 py-1.5 shadow-sm dark:bg-surface-800 dark:border-surface-700 whitespace-nowrap",
+                                closingDislike ? "animate-out fade-out duration-150" : "animate-in fade-in duration-200"
+                              )}>
+                                {[t("ai.dislikeInaccurate"), t("ai.dislikeUnexpected"), t("ai.dislikeIncomplete"), t("ai.dislikeTone"), t("ai.dislikeOther")].map((reason) => (
+                                  <button
+                                    key={reason}
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      await api.sendFeedback({ messageContent: msg.content, feedbackType: "dislike", reason });
+                                      api.logActivity({ action: "chat_feedback", detail: `dislike:${reason}` }).catch(() => {});
+                                      toast(t("ai.feedbackThanks"), "success");
+                                      feedbackDoneRef.current.add(i);
+                                      setShowDislikeOpts(false); setFeedbackMsgIdx(null);
+                                    }}
+                                    className="text-[10px] px-2 py-0.5 rounded-full border border-surface-200 text-surface-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors dark:border-surface-700 dark:hover:bg-red-950"
+                                  >
+                                    {reason}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {/* Feedback buttons */}
-                      {!isUser && !streaming && msg.content && !feedbackDoneRef.current.has(i) && (
-                        <div className="flex items-center gap-1 mt-1 ml-1">
-                          <button
-                            onClick={() => {
-                              if (showRating && feedbackMsgIdx === i) {
-                                setClosingRating(true);
-                                setTimeout(() => { setShowRating(false); setFeedbackMsgIdx(null); setClosingRating(false); }, 180);
-                              } else {
-                                setFeedbackMsgIdx(i); setShowRating(true); setShowDislikeOpts(false);
-                              }
-                            }}
-                            className="p-0.5 rounded text-surface-300 hover:text-amber-500 hover:bg-surface-100 transition-colors"
-                            title={t("ai.like")}
-                          >
-                            <ThumbsUp className="h-3 w-3" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (showDislikeOpts && feedbackMsgIdx === i) {
-                                setClosingDislike(true);
-                                setTimeout(() => { setShowDislikeOpts(false); setFeedbackMsgIdx(null); setClosingDislike(false); }, 180);
-                              } else {
-                                setFeedbackMsgIdx(i); setShowDislikeOpts(true); setShowRating(false);
-                              }
-                            }}
-                            className="p-0.5 rounded text-surface-300 hover:text-red-500 hover:bg-surface-100 transition-colors"
-                            title={t("ai.dislike")}
-                          >
-                            <ThumbsDown className="h-3 w-3" />
-                          </button>
-                          {/* Star rating popover */}
-                          {showRating && feedbackMsgIdx === i && (
-                            <div className={cn(
-                              "flex items-center gap-0.5 bg-white border border-surface-200 rounded-lg px-1.5 py-1 shadow-sm dark:bg-surface-800 dark:border-surface-700",
-                              closingRating ? "animate-out fade-out slide-out-to-bottom-1 duration-150" : "animate-in fade-in slide-in-from-bottom-1 duration-200"
-                            )}>
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                  key={star}
-                                  onClick={async () => {
-                                    await api.sendFeedback({ messageContent: msg.content, feedbackType: "like", rating: star });
-                                    api.logActivity({ action: "chat_feedback", detail: `like:${star}` }).catch(() => {});
-                                    toast(t("ai.feedbackThanks"), "success");
-                                    feedbackDoneRef.current.add(i);
-                                    setShowRating(false); setFeedbackMsgIdx(null);
-                                  }}
-                                  onMouseEnter={() => setHoverStar(star)}
-                                  onMouseLeave={() => setHoverStar(0)}
-                                  className="p-0.5 transition-transform hover:scale-125"
-                                >
-                                  <Star
-                                    className="h-3.5 w-3.5 transition-colors"
-                                    fill={hoverStar >= star ? "currentColor" : "none"}
-                                    color={hoverStar >= star ? "#f59e0b" : "#d1d5db"}
-                                  />
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                          {/* Dislike options popover */}
-                          {showDislikeOpts && feedbackMsgIdx === i && (
-                            <div className={cn(
-                              "flex flex-col gap-0.5 bg-white border border-surface-200 rounded-lg px-2 py-1.5 shadow-sm dark:bg-surface-800 dark:border-surface-700",
-                              closingDislike ? "animate-out fade-out slide-out-to-bottom-1 duration-150" : "animate-in fade-in slide-in-from-bottom-1 duration-200"
-                            )}>
-                              {[t("ai.dislikeInaccurate"), t("ai.dislikeUnexpected"), t("ai.dislikeIncomplete"), t("ai.dislikeTone"), t("ai.dislikeOther")].map((reason) => (
-                                <button
-                                  key={reason}
-                                  onClick={async () => {
-                                    await api.sendFeedback({ messageContent: msg.content, feedbackType: "dislike", reason });
-                                    api.logActivity({ action: "chat_feedback", detail: `dislike:${reason}` }).catch(() => {});
-                                    toast(t("ai.feedbackThanks"), "success");
-                                    feedbackDoneRef.current.add(i);
-                                    setShowDislikeOpts(false); setFeedbackMsgIdx(null);
-                                  }}
-                                  className="text-[10px] px-2 py-0.5 rounded-full border border-surface-200 text-surface-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors dark:border-surface-700 dark:hover:bg-red-950 whitespace-nowrap"
-                                >
-                                  {reason}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -679,8 +711,22 @@ export function AIChatWidget() {
                 onKeyDown={handleKeyDown}
                 placeholder={isGenerating ? t("ai.replying") : t("ai.placeholder")}
                 disabled={isGenerating}
-                className="flex-1 rounded-xl border border-surface-200 bg-surface-50 px-4 py-2 text-sm text-surface-900 outline-none transition-colors focus:border-brand-300 focus:ring-1 focus:ring-brand-300 disabled:opacity-50 disabled:cursor-not-allowed dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100 dark:focus:border-brand-700"
+                className="flex-1 rounded-xl border border-surface-200 bg-surface-50 px-4 py-2 text-sm text-surface-900 outline-none transition-all duration-200 hover:border-surface-300 hover:bg-surface-100 focus:border-brand-300 focus:ring-1 focus:ring-brand-300 focus:bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100 dark:hover:border-surface-600 dark:hover:bg-surface-700 dark:focus:border-brand-700 dark:focus:bg-surface-800"
               />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={toggleVoice}
+                disabled={isGenerating}
+                className={cn(
+                  "h-9 w-9 shrink-0 rounded-xl transition-colors",
+                  listening
+                    ? "text-red-500 bg-red-50 hover:bg-red-100 animate-pulse"
+                    : "text-surface-400 hover:text-surface-600 hover:bg-surface-100 dark:hover:bg-surface-800"
+                )}
+              >
+                {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </Button>
               {streaming ? (
                 <Button size="icon" onClick={handleStop} className="h-9 w-9 shrink-0 rounded-xl bg-red-500 hover:bg-red-600">
                   <div className="h-3 w-3 rounded-sm bg-white" />

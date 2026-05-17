@@ -252,6 +252,7 @@ const translations = {
   "ai.dislikeTone": { zh: "语气不当", en: "Wrong tone" },
   "ai.dislikeOther": { zh: "其他", en: "Other" },
   "ai.serviceUnavailable": { zh: "AI 服务不可用", en: "AI service unavailable" },
+  "ai.voiceNotSupported": { zh: "您的浏览器不支持语音识别", en: "Voice recognition not supported" },
 } as const;
 
 type TranslationKey = keyof typeof translations;
