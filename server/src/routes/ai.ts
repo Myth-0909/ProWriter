@@ -197,7 +197,7 @@ router.post("/chat", async (req: Request, res: Response) => {
 
     const apiKey = await getUserApiKey(req as AuthRequest);
     if (!apiKey) {
-      res.status(400).json({ error: "请先在设置中配置 API Key" });
+      res.status(400).json({ error: "请先在设置中配置 API Key / Please configure API Key in Settings" });
       return;
     }
 

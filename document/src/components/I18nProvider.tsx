@@ -253,6 +253,20 @@ const translations = {
   "ai.dislikeOther": { zh: "其他", en: "Other" },
   "ai.serviceUnavailable": { zh: "AI 服务不可用", en: "AI service unavailable" },
   "ai.voiceNotSupported": { zh: "当前环境不支持语音识别，请检查麦克风权限", en: "Voice input unavailable, check mic permissions" },
+  "ai.needApiKey": { zh: "请先在设置中配置 API Key 后再使用对话助手", en: "Please configure API Key in Settings first" },
+
+  // API Key
+  "apikey.title": { zh: "API Key", en: "API Key" },
+  "apikey.label": { zh: "DeepSeek API Key", en: "DeepSeek API Key" },
+  "apikey.configured": { zh: "已配置", en: "Configured" },
+  "apikey.notConfigured": { zh: "未配置，对话助手需要 API Key 才能使用", en: "Not configured. API Key required for AI chat." },
+  "apikey.edit": { zh: "编辑", en: "Edit" },
+  "apikey.configure": { zh: "配置", en: "Configure" },
+  "apikey.cancel": { zh: "取消", en: "Cancel" },
+  "apikey.placeholder": { zh: "sk-...", en: "sk-..." },
+  "apikey.save": { zh: "保存", en: "Save" },
+  "apikey.saved": { zh: "API Key 已保存", en: "API Key saved" },
+  "apikey.saveFailed": { zh: "保存失败", en: "Save failed" },
 } as const;
 
 type TranslationKey = keyof typeof translations;

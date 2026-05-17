@@ -2,7 +2,7 @@
 
 ## Always
 
-- **i18n required**: Every user-facing string must use the `t()` function from `useI18n()`. Add new keys to `document/src/components/I18nProvider.tsx` under the appropriate section. Never hardcode Chinese or English strings in the UI.
+- **i18n FIRST (non-negotiable)**: Before writing any feature code, add i18n keys to `document/src/components/I18nProvider.tsx`. Every user-facing string — frontend AND backend — must be bilingual (zh/en). Never hardcode Chinese or English strings anywhere.
 - **Full-stack verification**: Every feature must verify the complete chain end-to-end:
   1. Prisma schema → `npx prisma db push`
   2. Backend route → compile check with `npx tsc --noEmit`

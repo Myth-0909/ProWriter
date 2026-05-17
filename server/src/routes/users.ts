@@ -169,7 +169,7 @@ router.get("/me/apikey", async (req: AuthRequest, res: Response) => {
       : "";
     res.json({ hasKey: !!key, masked });
   } catch (error) {
-    res.status(500).json({ error: "获取API Key失败" });
+    res.status(500).json({ error: "获取API Key失败 / Failed to get API Key" });
   }
 });
 
@@ -178,7 +178,7 @@ router.put("/me/apikey", async (req: AuthRequest, res: Response) => {
   try {
     const { apiKey } = req.body;
     if (!apiKey || !apiKey.trim()) {
-      res.status(400).json({ error: "API Key不能为空" });
+      res.status(400).json({ error: "API Key不能为空 / API Key is required" });
       return;
     }
     await prisma.user.update({
@@ -187,7 +187,7 @@ router.put("/me/apikey", async (req: AuthRequest, res: Response) => {
     });
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: "保存API Key失败" });
+    res.status(500).json({ error: "保存API Key失败 / Failed to save API Key" });
   }
 });
 
