@@ -213,15 +213,6 @@ export function AIChatWidget() {
       restoredRef.current = false;
       return;
     }
-    // Check API key configured
-    api.getApiKey().then((res) => {
-      if (!res.hasKey) {
-        toast(t("ai.needApiKey"), "error");
-        setOpen(false);
-        return;
-      }
-    }).catch(() => {});
-
     // Log open
     api.logActivity({ action: "chat_open", detail: personalityRef.current }).catch(() => {});
 
@@ -304,7 +295,20 @@ export function AIChatWidget() {
         y: Math.max(0, Math.min(window.innerHeight - 56, posStart.current.y + dy)),
       });
     };
-    const mu = () => { setDragging(false); if (!hasMoved.current) setOpen(true); };
+    const mu = async () => {
+      setDragging(false);
+      if (!hasMoved.current) {
+        // Check API key before opening
+        try {
+          const res = await api.getApiKey();
+          if (!res.hasKey) {
+            toast(t("ai.needApiKey"), "error");
+            return;
+          }
+        } catch { /* proceed anyway */ }
+        setOpen(true);
+      }
+    };
     window.addEventListener("mousemove", mm);
     window.addEventListener("mouseup", mu);
     return () => { window.removeEventListener("mousemove", mm); window.removeEventListener("mouseup", mu); };

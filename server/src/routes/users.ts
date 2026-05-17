@@ -42,7 +42,7 @@ router.get("/me", async (req: AuthRequest, res: Response) => {
 // PUT /api/users/me - Update current user profile
 router.put("/me", async (req: AuthRequest, res: Response) => {
   try {
-    const { name, password, newPassword } = req.body;
+    const { name, password, newPassword, lang } = req.body;
 
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
@@ -75,6 +75,7 @@ router.put("/me", async (req: AuthRequest, res: Response) => {
       where: { id: req.user!.userId },
       data: {
         ...(name !== undefined && { name }),
+        ...(lang !== undefined && { lang }),
         ...(newPassword && { password: await bcrypt.hash(newPassword, 10) }),
       },
       select: {
@@ -156,9 +157,21 @@ router.post("/avatar", async (req: AuthRequest, res: Response) => {
   }
 });
 
+async function getUserLang(req: AuthRequest): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: { lang: true },
+  });
+  return user?.lang || "zh";
+}
+function t(lang: string, zh: string, en: string): string {
+  return lang === "en" ? en : zh;
+}
+
 // GET /api/users/me/apikey - Get API key (masked)
 router.get("/me/apikey", async (req: AuthRequest, res: Response) => {
   try {
+    const lang = await getUserLang(req);
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
       select: { apiKey: true },
@@ -169,16 +182,18 @@ router.get("/me/apikey", async (req: AuthRequest, res: Response) => {
       : "";
     res.json({ hasKey: !!key, masked });
   } catch (error) {
-    res.status(500).json({ error: "获取API Key失败 / Failed to get API Key" });
+    const lang = "zh";
+    res.status(500).json({ error: t(lang, "获取API Key失败", "Failed to get API Key") });
   }
 });
 
 // PUT /api/users/me/apikey - Save API key
 router.put("/me/apikey", async (req: AuthRequest, res: Response) => {
   try {
+    const lang = await getUserLang(req);
     const { apiKey } = req.body;
     if (!apiKey || !apiKey.trim()) {
-      res.status(400).json({ error: "API Key不能为空 / API Key is required" });
+      res.status(400).json({ error: t(lang, "API Key不能为空", "API Key is required") });
       return;
     }
     await prisma.user.update({
@@ -187,7 +202,8 @@ router.put("/me/apikey", async (req: AuthRequest, res: Response) => {
     });
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: "保存API Key失败 / Failed to save API Key" });
+    const lang = "zh";
+    res.status(500).json({ error: t(lang, "保存API Key失败", "Failed to save API Key") });
   }
 });
 

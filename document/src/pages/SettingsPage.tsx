@@ -266,7 +266,7 @@ export function SettingsPage() {
                     {t("apikey.label")}
                   </p>
                   <p className="text-xs text-surface-500 mt-0.5">
-                    {maskedKey ? t("apikey.configured") : t("apikey.notConfigured")}
+                    {maskedKey ? t("apikey.configured") : t("apikey.desc")}
                   </p>
                 </div>
                 <button

@@ -257,7 +257,8 @@ const translations = {
 
   // API Key
   "apikey.title": { zh: "API Key", en: "API Key" },
-  "apikey.label": { zh: "DeepSeek API Key", en: "DeepSeek API Key" },
+  "apikey.label": { zh: "API Key", en: "API Key" },
+  "apikey.desc": { zh: "支持 DeepSeek、OpenAI 等兼容接口的 API Key", en: "Supports DeepSeek, OpenAI and compatible API keys" },
   "apikey.configured": { zh: "已配置", en: "Configured" },
   "apikey.notConfigured": { zh: "未配置，对话助手需要 API Key 才能使用", en: "Not configured. API Key required for AI chat." },
   "apikey.edit": { zh: "编辑", en: "Edit" },

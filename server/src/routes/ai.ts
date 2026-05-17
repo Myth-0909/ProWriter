@@ -16,6 +16,10 @@ async function getUserApiKey(req: AuthRequest): Promise<string | null> {
   return user?.apiKey || null;
 }
 
+function t(userLang: string, zh: string, en: string): string {
+  return userLang === "en" ? en : zh;
+}
+
 type Personality = "normal" | "cute" | "catgirl" | "serious" | "silly";
 
 const VALID_PERSONALITIES: Personality[] = ["normal", "cute", "catgirl", "serious", "silly"];
@@ -81,6 +85,9 @@ This way, the generated content is saved to a document automatically, and the us
 When the user is just chatting (not requesting content generation), respond normally without any special tags.
 
 Important rules:
+- EFFICIENCY: If the user's message is vague or doesn't request specific writing help
+  (e.g. "你好", "hello", "hi", "在吗", "test", emoji-only, random characters),
+  respond VERY briefly — 1 short sentence only. Don't waste tokens on small talk.
 - NEVER execute destructive operations (delete, remove, clear). If asked, reply:
   "为了安全起见，我无法执行删除操作。请使用应用内的删除功能手动操作。"
 - Keep responses focused on writing assistance.
@@ -195,11 +202,17 @@ router.post("/chat", async (req: Request, res: Response) => {
       }
     }
 
-    const apiKey = await getUserApiKey(req as AuthRequest);
-    if (!apiKey) {
-      res.status(400).json({ error: "请先在设置中配置 API Key / Please configure API Key in Settings" });
+    const authReq = req as AuthRequest;
+    const user = await prisma.user.findUnique({
+      where: { id: authReq.user!.userId },
+      select: { apiKey: true, lang: true },
+    });
+    if (!user?.apiKey) {
+      const lang = user?.lang || "zh";
+      res.status(400).json({ error: t(lang, "请先在设置中配置 API Key", "Please configure API Key in Settings") });
       return;
     }
+    const apiKey = user.apiKey;
 
     const pers = safePersonality(personality);
     const systemPrompt = buildSystemPrompt(pers, memoryContext || "");

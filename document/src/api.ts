@@ -55,7 +55,7 @@ export const api = {
       "/users/me"
     ),
 
-  updateProfile: (data: { name?: string; avatar?: string; password?: string; newPassword?: string }) =>
+  updateProfile: (data: { name?: string; avatar?: string; password?: string; newPassword?: string; lang?: string }) =>
     request<{ user: { id: string; name: string; email: string; avatar: string | null; createdAt: string } }>(
       "/users/me", { method: "PUT", body: JSON.stringify(data) }
     ),

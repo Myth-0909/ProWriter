@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TopAppBar } from "@/components/TopAppBar";
 import { SideNavBar } from "@/components/SideNavBar";
 import { PageTransition } from "@/components/PageTransition";
@@ -16,7 +16,7 @@ import { useDocuments } from "@/store";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
 import { useAuth } from "@/auth";
-import { isLoggedIn as checkLoggedIn, clearToken } from "@/api";
+import { isLoggedIn as checkLoggedIn, clearToken, api } from "@/api";
 import "./App.css";
 
 export type NavId = "documents" | "favorites" | "trash" | "settings";
@@ -35,8 +35,13 @@ function EditorPageContent({ activeDocId, setActiveDocId }: { activeDocId: strin
 
 export default function App() {
   const { toast } = useToast();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { refreshUser } = useAuth();
+
+  // Sync language preference to DB
+  useEffect(() => {
+    api.updateProfile({ lang }).catch(() => {});
+  }, [lang]);
   const { getDocument } = useDocuments();
   const [currentPage, setCurrentPage] = useState<Page>("documents");
   const [isLoggedIn, setIsLoggedIn] = useState(() => checkLoggedIn());
