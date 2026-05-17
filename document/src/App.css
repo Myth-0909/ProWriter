@@ -305,6 +305,19 @@ input,
 textarea,
 [contenteditable] {
   color: inherit;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:hover:not(:disabled):not(:focus),
+textarea:hover:not(:disabled):not(:focus) {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.dark input:hover:not(:disabled):not(:focus),
+.dark textarea:hover:not(:disabled):not(:focus) {
+  border-color: #475569;
+  background-color: #1e293b;
 }
 
 input::placeholder,

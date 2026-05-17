@@ -396,17 +396,31 @@ export function AIChatWidget() {
     setStreaming(false);
   }, []);
 
-  const toggleVoice = useCallback(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast(t("ai.voiceNotSupported"), "error");
-      return;
-    }
+  const toggleVoice = useCallback(async () => {
     if (listening) {
       recognitionRef.current?.stop();
       setListening(false);
       return;
     }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    // Request mic permission first (triggers OS permission dialog)
+    if (navigator.mediaDevices?.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+      } catch {
+        toast("请在系统设置中允许麦克风权限后重试", "error");
+        return;
+      }
+    }
+
+    if (!SpeechRecognition) {
+      toast(t("ai.voiceNotSupported"), "error");
+      return;
+    }
+
     const recognition = new SpeechRecognition();
     recognition.lang = "zh-CN";
     recognition.interimResults = false;
@@ -414,12 +428,27 @@ export function AIChatWidget() {
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       setInput((prev) => prev + transcript);
+      toast("语音识别成功", "success");
     };
-    recognition.onerror = () => setListening(false);
+    recognition.onerror = (event: any) => {
+      if (event.error === "not-allowed") {
+        toast("请在系统设置中允许麦克风权限后重试", "error");
+      } else if (event.error === "no-speech") {
+        toast("未检测到语音，请重试", "info");
+      } else {
+        toast(`语音识别失败: ${event.error}`, "error");
+      }
+      setListening(false);
+    };
     recognition.onend = () => setListening(false);
     recognitionRef.current = recognition;
-    recognition.start();
-    setListening(true);
+    try {
+      recognition.start();
+      setListening(true);
+    } catch {
+      toast(t("ai.voiceNotSupported"), "error");
+      setListening(false);
+    }
   }, [listening, toast]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -459,7 +488,7 @@ export function AIChatWidget() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100">{t("ai.title")}</h3>
-                  <p className="text-[10px] text-surface-500">{t("ai.subtitle")} · {currentPersonality.label}</p>
+                  <p className="text-[10px] text-surface-500">小麦 · {currentPersonality.label}</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -607,7 +636,7 @@ export function AIChatWidget() {
                             {/* Star rating popover */}
                             {showRating && feedbackMsgIdx === i && (
                               <div className={cn(
-                                "absolute left-full top-0 ml-1 flex items-center gap-0.5 bg-white border border-surface-200 rounded-lg px-1.5 py-1 shadow-sm dark:bg-surface-800 dark:border-surface-700 whitespace-nowrap",
+                                "absolute bottom-full left-1/2 -translate-x-1/2 mb-1 flex items-center gap-0.5 bg-white border border-surface-200 rounded-lg px-1.5 py-1 shadow-sm dark:bg-surface-800 dark:border-surface-700 whitespace-nowrap",
                                 closingRating ? "animate-out fade-out duration-150" : "animate-in fade-in duration-200"
                               )}>
                                 {[1, 2, 3, 4, 5].map((star) => (
@@ -637,7 +666,7 @@ export function AIChatWidget() {
                             {/* Dislike options popover */}
                             {showDislikeOpts && feedbackMsgIdx === i && (
                               <div className={cn(
-                                "absolute left-full top-0 ml-1 flex flex-col gap-0.5 bg-white border border-surface-200 rounded-lg px-2 py-1.5 shadow-sm dark:bg-surface-800 dark:border-surface-700 whitespace-nowrap",
+                                "absolute bottom-full left-1/2 -translate-x-1/2 mb-1 flex flex-col gap-0.5 bg-white border border-surface-200 rounded-lg px-2 py-1.5 shadow-sm dark:bg-surface-800 dark:border-surface-700 whitespace-nowrap",
                                 closingDislike ? "animate-out fade-out duration-150" : "animate-in fade-in duration-200"
                               )}>
                                 {[t("ai.dislikeInaccurate"), t("ai.dislikeUnexpected"), t("ai.dislikeIncomplete"), t("ai.dislikeTone"), t("ai.dislikeOther")].map((reason) => (
