@@ -162,6 +162,7 @@ export function AIChatWidget() {
   const restoredRef = useRef(false);
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const [keyOk, setKeyOk] = useState(false);
 
   // Save conversation to DB
   const saveConversation = useCallback(async () => {
@@ -203,16 +204,33 @@ export function AIChatWidget() {
     return () => window.removeEventListener("resize", updatePos);
   }, []);
 
-  // On open: restore from DB or greet. On close: save. On personality change: re-greet.
+  // On open: check API key first, then restore/greet. On close: save.
   useEffect(() => {
     if (!open) {
-      // Save conversation before closing
       if (messages.length > 0) {
         api.saveConversation({ messages, personality: personalityRef.current }).catch(() => {});
       }
       restoredRef.current = false;
+      setKeyOk(false);
       return;
     }
+    // Verify API key before proceeding
+    api.getApiKey().then((res) => {
+      if (!res.hasKey) {
+        toast(t("ai.needApiKey"), "error");
+        setOpen(false);
+      } else {
+        setKeyOk(true);
+      }
+    }).catch(() => {
+      toast(t("ai.needApiKey"), "error");
+      setOpen(false);
+    });
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // On keyOk: restore from DB or greet. On personality change: re-greet.
+  useEffect(() => {
+    if (!open || !keyOk) return;
     // Log open
     api.logActivity({ action: "chat_open", detail: personalityRef.current }).catch(() => {});
 
@@ -235,7 +253,7 @@ export function AIChatWidget() {
     } else {
       greetUser();
     }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, keyOk]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-greet on personality change (only if already open)
   useEffect(() => {
@@ -298,15 +316,7 @@ export function AIChatWidget() {
     const mu = async () => {
       setDragging(false);
       if (!hasMoved.current) {
-        // Check API key before opening
-        try {
-          const res = await api.getApiKey();
-          if (!res.hasKey) {
-            toast(t("ai.needApiKey"), "error");
-            return;
-          }
-        } catch { /* proceed anyway */ }
-        setOpen(true);
+        setOpen(true); // Open first, then check inside the effect
       }
     };
     window.addEventListener("mousemove", mm);
@@ -490,7 +500,7 @@ export function AIChatWidget() {
         <Sparkles className="h-6 w-6" />
       </button>
 
-      {open && (
+      {open && keyOk && (
         <div className="fixed bottom-6 right-6 z-50 flex h-[640px] w-[480px] flex-col rounded-2xl border border-surface-200 bg-white shadow-2xl dark:border-surface-700 dark:bg-surface-900">
           {/* Header */}
           <div className="shrink-0 border-b border-surface-200 px-4 py-3 dark:border-surface-700">
