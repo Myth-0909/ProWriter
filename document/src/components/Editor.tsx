@@ -11,6 +11,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
 import { Toggle } from "@/components/ui/toggle";
 import { Separator } from "@/components/ui/separator";
+import { Scrollbar } from "@/components/ui/scrollbar";
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   List, ListOrdered, Code, Code2, Quote, Minus,
@@ -313,7 +314,7 @@ export function Editor({ documentId }: EditorProps) {
       </div>
 
       {/* Editor Area */}
-      <div className="flex-1 overflow-y-auto">
+      <Scrollbar className="flex-1">
         <div className="mx-auto max-w-[720px] px-12 py-12">
           {/* Title + Favorite */}
           <div className="flex items-start gap-3 mb-4">
@@ -342,22 +343,21 @@ export function Editor({ documentId }: EditorProps) {
           <div className="mb-8 border-b border-surface-200 dark:border-surface-800" />
 
           <EditorContent editor={editor} />
-
-          {/* Selection character count */}
-          <div
-            className="text-xs text-surface-400 transition-all duration-200 text-right mt-1"
-            style={{ opacity: selectionChars > 0 ? 1 : 0, height: selectionChars > 0 ? 16 : 0 }}
-          >
-            {selectionChars > 0 && `${t("editor.selected")} ${selectionChars} ${t("editor.characters")}`}
-          </div>
         </div>
-      </div>
+      </Scrollbar>
 
       {/* Footer */}
       <div className="flex items-center justify-between border-t border-surface-200 px-6 py-2 dark:border-surface-800">
-        <div className="text-xs text-surface-400">
-          {saveStatus === "saving" && t("editor.saving")}
-          {saveStatus === "saved" && <span className="text-green-500">{t("editor.saved")}</span>}
+        <div className="flex items-center gap-3">
+          <div className="text-xs text-surface-400">
+            {saveStatus === "saving" && t("editor.saving")}
+            {saveStatus === "saved" && <span className="text-green-500">{t("editor.saved")}</span>}
+          </div>
+          {selectionChars > 0 && (
+            <span className="text-xs text-brand-400">
+              {t("editor.selected")} {selectionChars} {t("editor.characters")}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-xs text-surface-500">
