@@ -174,8 +174,14 @@ export function AIChatWidget() {
     setSaving(false);
   }, [messages, saving]);
 
-  // Drag
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+  // Drag - restore saved position or default bottom-right
+  const [pos, setPos] = useState(() => {
+    try {
+      const saved = localStorage.getItem("chat-btn-pos");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return { x: window.innerWidth - 56 - 16, y: window.innerHeight - 56 - 16 };
+  });
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const posStart = useRef({ x: 0, y: 0 });
@@ -313,10 +319,25 @@ export function AIChatWidget() {
         y: Math.max(0, Math.min(window.innerHeight - 56, posStart.current.y + dy)),
       });
     };
-    const mu = async () => {
+    const mu = (e: MouseEvent) => {
       setDragging(false);
       if (!hasMoved.current) {
-        setOpen(true); // Open first, then check inside the effect
+        setOpen(true);
+      } else {
+        // Snap to nearest edge
+        const MARGIN = 16;
+        const btnSize = 56;
+        const maxX = window.innerWidth - btnSize - MARGIN;
+        const maxY = window.innerHeight - btnSize - MARGIN;
+        const currentX = posStart.current.x + (e.clientX - dragStart.current.x);
+        const currentY = posStart.current.y + (e.clientY - dragStart.current.y);
+        const distLeft = currentX - MARGIN;
+        const distRight = maxX - currentX;
+        const snapX = distLeft < distRight ? MARGIN : maxX;
+        const snapY = Math.max(MARGIN, Math.min(maxY, currentY));
+        const snapped = { x: snapX, y: snapY };
+        setPos(snapped);
+        try { localStorage.setItem("chat-btn-pos", JSON.stringify(snapped)); } catch {}
       }
     };
     window.addEventListener("mousemove", mm);
