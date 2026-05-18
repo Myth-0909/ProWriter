@@ -22,12 +22,19 @@ export function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [apiKey, setApiKey] = useState("");
   const [maskedKey, setMaskedKey] = useState("");
-  const [editingKey, setEditingKey] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [savingKey, setSavingKey] = useState(false);
+  const [changingKey, setChangingKey] = useState(false);
+  const [verifyPassword, setVerifyPassword] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [keyEditable, setKeyEditable] = useState(false);
 
   useEffect(() => {
-    api.getApiKey().then((res) => setMaskedKey(res.masked)).catch(() => {});
+    api.getApiKey().then((res) => {
+      setMaskedKey(res.masked);
+      // If no key configured, input is editable by default
+      if (!res.hasKey) setKeyEditable(true);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -260,37 +267,97 @@ export function SettingsPage() {
               </h3>
             </div>
             <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between py-2">
-                <div>
-                  <p className="text-sm font-medium text-surface-800 dark:text-surface-200">
-                    {t("apikey.label")}
-                  </p>
-                  <p className="text-xs text-surface-500 mt-0.5">
-                    {maskedKey ? t("apikey.configured") : t("apikey.desc")}
-                  </p>
-                </div>
-                <button
-                  onClick={() => { setEditingKey(!editingKey); setApiKey(""); setShowKey(false); }}
-                  className="flex items-center gap-1.5 rounded-lg border border-surface-200 px-3 py-1.5 text-xs font-medium text-surface-600 hover:bg-surface-50 transition-all cursor-pointer dark:border-surface-700 dark:text-surface-400 dark:hover:bg-surface-800"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  {editingKey ? t("apikey.cancel") : maskedKey ? t("apikey.edit") : t("apikey.configure")}
-                </button>
+              <div>
+                <p className="text-sm font-medium text-surface-800 dark:text-surface-200">
+                  {t("apikey.label")}
+                </p>
+                <p className="text-xs text-surface-500 mt-0.5">
+                  {maskedKey ? t("apikey.configured") : t("apikey.desc")}
+                </p>
               </div>
 
-              {editingKey && (
+              {/* Password verification for changing existing key */}
+              {maskedKey && !keyEditable && changingKey && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    value={verifyPassword}
+                    onChange={(e) => setVerifyPassword(e.target.value)}
+                    placeholder={t("apikey.passwordPlaceholder")}
+                    className="flex-1 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 text-sm text-surface-900 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100"
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter" && verifyPassword) {
+                        setVerifying(true);
+                        try {
+                          await api.verifyPassword(verifyPassword);
+                          setKeyEditable(true);
+                          setChangingKey(false);
+                          setVerifyPassword("");
+                        } catch {
+                          toast(t("apikey.wrongPassword"), "error");
+                        } finally {
+                          setVerifying(false);
+                        }
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      if (!verifyPassword) return;
+                      setVerifying(true);
+                      try {
+                        await api.verifyPassword(verifyPassword);
+                        setKeyEditable(true);
+                        setChangingKey(false);
+                        setVerifyPassword("");
+                      } catch {
+                        toast(t("apikey.wrongPassword"), "error");
+                      } finally {
+                        setVerifying(false);
+                      }
+                    }}
+                    disabled={!verifyPassword || verifying}
+                  >
+                    {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : t("apikey.verify")}
+                  </Button>
+                  <button
+                    onClick={() => { setChangingKey(false); setVerifyPassword(""); }}
+                    className="text-xs text-surface-400 hover:text-surface-600 cursor-pointer"
+                  >
+                    {t("apikey.cancel")}
+                  </button>
+                </div>
+              )}
+
+              {/* Change button when key exists but not editing */}
+              {maskedKey && !keyEditable && !changingKey && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-surface-500">{maskedKey}</span>
+                  <button
+                    onClick={() => setChangingKey(true)}
+                    className="flex items-center gap-1.5 rounded-lg border border-surface-200 px-3 py-1.5 text-xs font-medium text-surface-600 hover:bg-surface-50 transition-all cursor-pointer dark:border-surface-700 dark:text-surface-400 dark:hover:bg-surface-800"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    {t("apikey.change")}
+                  </button>
+                </div>
+              )}
+
+              {/* API Key input - always visible when editable */}
+              {(keyEditable || !maskedKey) && (
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <input
                       type={showKey ? "text" : "password"}
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
-                      placeholder={t("apikey.placeholder")}
+                      placeholder={maskedKey ? maskedKey : t("apikey.placeholder")}
                       className="w-full rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 pr-9 text-sm text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-300 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100"
                     />
                     <button
                       onClick={() => setShowKey(!showKey)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600 cursor-pointer"
                     >
                       {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -304,8 +371,8 @@ export function SettingsPage() {
                         await api.saveApiKey(apiKey.trim());
                         const res = await api.getApiKey();
                         setMaskedKey(res.masked);
-                        setEditingKey(false);
                         setApiKey("");
+                        setKeyEditable(false);
                         toast(t("apikey.saved"), "success");
                       } catch {
                         toast(t("apikey.saveFailed"), "error");
@@ -317,11 +384,15 @@ export function SettingsPage() {
                   >
                     {savingKey ? <Loader2 className="h-4 w-4 animate-spin" /> : t("apikey.save")}
                   </Button>
+                  {maskedKey && (
+                    <button
+                      onClick={() => { setKeyEditable(false); setApiKey(""); setShowKey(false); }}
+                      className="text-xs text-surface-400 hover:text-surface-600 cursor-pointer"
+                    >
+                      {t("apikey.cancel")}
+                    </button>
+                  )}
                 </div>
-              )}
-
-              {!editingKey && maskedKey && (
-                <p className="text-sm text-surface-500 font-mono">{maskedKey}</p>
               )}
             </div>
           </section>

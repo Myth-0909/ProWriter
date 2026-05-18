@@ -268,6 +268,11 @@ const translations = {
   "apikey.save": { zh: "保存", en: "Save" },
   "apikey.saved": { zh: "API Key 已保存", en: "API Key saved" },
   "apikey.saveFailed": { zh: "保存失败", en: "Save failed" },
+  "apikey.change": { zh: "更改", en: "Change" },
+  "apikey.verifyPassword": { zh: "请输入登录密码以更改 API Key", en: "Enter your login password to change API Key" },
+  "apikey.passwordPlaceholder": { zh: "输入登录密码", en: "Enter password" },
+  "apikey.verify": { zh: "验证", en: "Verify" },
+  "apikey.wrongPassword": { zh: "密码错误", en: "Wrong password" },
 } as const;
 
 type TranslationKey = keyof typeof translations;

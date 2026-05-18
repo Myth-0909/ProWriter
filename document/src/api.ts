@@ -158,4 +158,9 @@ export const api = {
     request<{ success: boolean }>(
       "/users/me/apikey", { method: "PUT", body: JSON.stringify({ apiKey }) }
     ),
+
+  verifyPassword: (password: string) =>
+    request<{ verified: boolean }>(
+      "/auth/verify-password", { method: "POST", body: JSON.stringify({ password }) }
+    ),
 };

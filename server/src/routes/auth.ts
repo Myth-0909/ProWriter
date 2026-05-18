@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import prisma from "../lib/prisma";
-import { generateToken } from "../middleware/auth";
+import { generateToken, authMiddleware, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -183,6 +183,37 @@ router.post("/reset-password", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Reset password error:", error);
     res.status(500).json({ error: "重置失败，请稍后重试" });
+  }
+});
+
+// POST /api/auth/verify-password - Verify current password (requires auth)
+router.post("/verify-password", authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      res.status(400).json({ error: "请输入密码" });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { password: true },
+    });
+    if (!user) {
+      res.status(404).json({ error: "用户不存在" });
+      return;
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      res.status(401).json({ error: "密码错误" });
+      return;
+    }
+
+    res.json({ verified: true });
+  } catch (error) {
+    console.error("Verify password error:", error);
+    res.status(500).json({ error: "验证失败" });
   }
 });
 
