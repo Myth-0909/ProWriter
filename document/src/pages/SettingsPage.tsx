@@ -7,7 +7,7 @@ import { useI18n } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { useAuth } from "@/auth";
 import { api } from "@/api";
-import { Sun, Moon, Monitor, Languages, User, Camera, Info, Loader2, Key, Eye, EyeOff, Pencil } from "lucide-react";
+import { Sun, Moon, Monitor, Languages, User, Camera, Info, Loader2, Key, Eye, EyeOff, Pencil, X } from "lucide-react";
 
 export function SettingsPage() {
   const { theme, themeMode, setThemeMode } = useTheme();
@@ -28,6 +28,9 @@ export function SettingsPage() {
   const [verifyPassword, setVerifyPassword] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [keyEditable, setKeyEditable] = useState(false);
+  const [noKeyHintDismissed, setNoKeyHintDismissed] = useState(
+    () => localStorage.getItem("apikey-hint-dismissed") === "true"
+  );
 
   useEffect(() => {
     api.getApiKey().then((res) => {
@@ -340,6 +343,24 @@ export function SettingsPage() {
                   >
                     <Pencil className="h-3.5 w-3.5" />
                     {t("apikey.change")}
+                  </button>
+                </div>
+              )}
+
+              {/* Hint when no API key configured */}
+              {!maskedKey && !noKeyHintDismissed && (
+                <div className="flex items-center justify-between rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 dark:bg-amber-950 dark:border-amber-800">
+                  <span className="text-xs text-amber-700 dark:text-amber-300">
+                    {t("apikey.noKeyHint")}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setNoKeyHintDismissed(true);
+                      localStorage.setItem("apikey-hint-dismissed", "true");
+                    }}
+                    className="text-amber-400 hover:text-amber-600 cursor-pointer ml-2 shrink-0"
+                  >
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               )}

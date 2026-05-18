@@ -273,6 +273,7 @@ const translations = {
   "apikey.passwordPlaceholder": { zh: "输入登录密码", en: "Enter password" },
   "apikey.verify": { zh: "验证", en: "Verify" },
   "apikey.wrongPassword": { zh: "密码错误", en: "Wrong password" },
+  "apikey.noKeyHint": { zh: "未配置 API Key 将无法使用 AI 小麦助手", en: "AI assistant unavailable without an API Key" },
 } as const;
 
 type TranslationKey = keyof typeof translations;
